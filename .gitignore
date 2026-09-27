@@ -1,0 +1,5 @@
+fonts/*.ttf
+store/
+build.py
+icon-src.html
+_*

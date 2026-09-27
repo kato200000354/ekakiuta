@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#3e6fc5">
+<meta name="description" content="えかきうたを聞きながら絵を描いて、最後に答え合わせするおえかきアプリ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>えかきうたチャレンジ</title>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+body{margin:0;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<style>
+@font-face{font-family:'Zen Maru Gothic';font-weight:500;font-display:swap;src:url(fonts/zmg-500.woff2) format('woff2')}
+@font-face{font-family:'Zen Maru Gothic';font-weight:700;font-display:swap;src:url(fonts/zmg-700.woff2) format('woff2')}
+@font-face{font-family:'Zen Maru Gothic';font-weight:900;font-display:swap;src:url(fonts/zmg-900.woff2) format('woff2')}
+:root{
+  --outer:#dde8f4;
+  --bg:#e8f1fb;
+  --cream:#fdf8ea;
+  --surface:#ffffff;
+  --surface-2:#f4f8fd;
+  --ink:#2d3857;
+  --muted:#6c7791;
+  --line:#d2e0f0;
+  --blue:#3e6fc5;
+  --blue-soft:#dbe8f8;
+  --on-blue:#ffffff;
+  --yellow:#f3c342;
+  --pink:#f4a3a8;
+  --green:#4f9d68;
+  --canvas:#fffdf7;
+  --shadow:0 6px 18px rgba(45,56,87,.08);
+  --pf:var(--surface);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --outer:#0d1522;
+    --bg:#152033;
+    --cream:#1a2436;
+    --surface:#223050;
+    --surface-2:#1c2944;
+    --ink:#e9eff9;
+    --muted:#9fb0cb;
+    --line:#34476b;
+    --blue:#77a4f2;
+    --blue-soft:#2b3e64;
+    --on-blue:#0f1a2e;
+    --shadow:0 6px 18px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --outer:#0d1522;
+  --bg:#152033;
+  --cream:#1a2436;
+  --surface:#223050;
+  --surface-2:#1c2944;
+  --ink:#e9eff9;
+  --muted:#9fb0cb;
+  --line:#34476b;
+  --blue:#77a4f2;
+  --blue-soft:#2b3e64;
+  --on-blue:#0f1a2e;
+  --shadow:0 6px 18px rgba(0,0,0,.3);
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  background:var(--outer);color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Rounded Mplus 1c","Yu Gothic",sans-serif;
+  font-weight:500;-webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+#app{position:relative;height:100%;max-width:440px;margin:0 auto;background:var(--bg);overflow:hidden}
+@media (min-width:520px) and (min-height:700px){
+  #app{height:calc(100% - 40px);margin-block:20px;border-radius:36px;border:2px solid var(--ink);box-shadow:0 20px 50px rgba(45,56,87,.18)}
+}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;gap:14px;padding:16px 18px 18px;overflow-y:auto;animation:enter .28s ease}
+@keyframes enter{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.screen,.pop,.spark{animation:none!important}}
+
+/* top bar */
+.topbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:44px}
+.topbar h2{margin:0;text-align:center;font-size:19px;font-weight:700;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.iconbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:50%}
+.iconbtn:hover{background:var(--blue-soft)}
+.iconbtn svg{width:22px;height:22px}
+
+/* home */
+#s-home{background:var(--cream);align-items:center;text-align:center;gap:10px;padding-bottom:0}
+#s-home .logo{margin-top:auto}
+.logo{position:relative;margin:4px 0 0;line-height:1.05}
+.logo .big{display:block;font-size:clamp(46px,14vw,62px);font-weight:900;letter-spacing:.02em}
+.logo .big span{display:inline-block}
+.logo .big span:nth-child(odd){transform:rotate(-6deg) translateY(2px)}
+.logo .big span:nth-child(even){transform:rotate(5deg) translateY(-3px)}
+.logo .sub{display:block;font-size:clamp(28px,8.5vw,36px);font-weight:900;letter-spacing:.12em;margin-top:6px;transform:rotate(-2deg)}
+.note{position:absolute;width:26px;height:26px}
+.lead{margin:6px 0 0;font-size:16px;line-height:1.8;letter-spacing:.1em;font-weight:700}
+.mascot{width:min(62vw,230px);color:var(--ink);--pf:var(--cream)}
+.progress-chip{font-size:13px;color:var(--muted);letter-spacing:.08em}
+.btn-main{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:280px;height:60px;border-radius:30px;background:var(--blue);color:var(--on-blue);font-size:20px;font-weight:700;letter-spacing:.2em;box-shadow:0 6px 0 rgba(45,56,87,.18)}
+.btn-main:active{transform:translateY(2px);box-shadow:0 3px 0 rgba(45,56,87,.18)}
+.btn-main svg{width:22px;height:22px}
+.btn-sub{display:flex;align-items:center;gap:12px;width:100%;max-width:280px;height:44px;padding-inline:22px;border-radius:22px;border:2px solid var(--line);background:var(--surface);font-size:15px;font-weight:700;letter-spacing:.1em}
+.btn-sub svg{width:20px;height:20px;color:var(--ink)}
+.wave{display:block;flex:none;width:calc(100% + 36px);margin:auto -18px 0;height:56px;pointer-events:none}
+.wave path{fill:var(--blue-soft)}
+
+/* lyric bubble */
+.bubble{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:26px;padding:12px 18px;box-shadow:var(--shadow);min-height:64px}
+.bubble .lyr-wrap{flex:1;display:flex;flex-direction:column;gap:2px}
+.bubble .tip{margin:0;font-size:12px;color:var(--muted);letter-spacing:.06em}
+.bubble .lyr{font-size:17px;font-weight:700;letter-spacing:.14em;line-height:1.6}
+.playbtn{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue)}
+.playbtn svg{width:22px;height:22px}
+.ch{transition:color .15s,opacity .15s}
+.playing .ch{opacity:.35}
+.playing .ch.on{opacity:1;color:var(--blue)}
+
+/* listen */
+.listen-card{background:var(--surface);border-radius:28px;box-shadow:var(--shadow);padding:22px 20px;display:flex;flex-direction:column;gap:18px}
+.listen-title{text-align:center;flex-wrap:wrap;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.12em}
+.listen-title svg{width:24px;height:24px;color:var(--blue)}
+.lyrics{display:flex;flex-direction:column;gap:6px;text-align:center}
+.lyrics p{margin:0;font-size:17px;font-weight:700;letter-spacing:.16em;line-height:1.7;opacity:.55;transition:opacity .2s}
+.lyrics p.cur{opacity:1}
+.lyrics p.cur .ch{opacity:.35}
+.lyrics p.cur .ch.on{opacity:1;color:var(--blue)}
+.lyrics p.done{opacity:.9}
+.seek{display:flex;flex-direction:column;gap:6px}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--blue);width:0}
+.bar b{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--surface);border:3px solid var(--blue);left:0}
+.times{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bigplay{align-self:center;width:58px;height:58px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.bigplay svg{width:24px;height:24px}
+.mystery{flex:1;min-height:150px;display:grid;place-items:center;position:relative}
+.mystery .cloud{width:150px;height:150px;border-radius:50%;background:var(--surface);border:3px dashed var(--line);display:grid;place-items:center;font-size:72px;font-weight:900;color:var(--blue)}
+.mystery .art{width:150px;color:var(--ink)}
+.hint-text{text-align:center;font-size:13px;color:var(--muted);margin:0;letter-spacing:.06em}
+
+/* draw */
+.paper{position:relative;background:var(--canvas);border-radius:26px;box-shadow:var(--shadow);aspect-ratio:1/1;width:100%;max-width:100%;overflow:hidden;flex:none}
+.paper canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.paper .ghost{position:absolute;inset:0;width:100%;height:100%;color:#6f9be6;opacity:0;transition:opacity .3s;pointer-events:none}
+.paper .ghost.show{opacity:.55}
+.tools{display:grid;grid-template-columns:70px 1fr 70px;gap:10px;align-items:stretch}
+.tool{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;font-size:11px;font-weight:700;letter-spacing:.04em;min-height:78px}
+.tool svg{width:22px;height:22px}
+.tool:disabled{opacity:.4;cursor:default}
+.palette{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.palette .dots{display:flex;gap:8px}
+.dot{width:24px;height:24px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 0 var(--ink)}
+.dot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.go .circle{width:40px;height:40px;border-radius:50%;background:var(--blue);color:var(--on-blue);display:grid;place-items:center}
+.go.finish .circle{width:48px;height:48px}
+.go .circle svg{width:22px;height:22px}
+.minor{display:flex;justify-content:center;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding-inline:14px;border-radius:17px;background:var(--surface);border:2px solid var(--line);font-size:13px;font-weight:700;letter-spacing:.06em}
+.chip svg{width:16px;height:16px}
+
+/* guess */
+.guess-q{text-align:center;font-size:22px;font-weight:900;letter-spacing:.14em;margin:4px 0 0}
+.guess-sub{text-align:center;margin:0;color:var(--muted);font-size:14px;letter-spacing:.06em}
+.guess-img{align-self:center;width:min(70%,260px);aspect-ratio:1/1;background:var(--canvas);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.guess-img img{width:100%;height:100%;display:block}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{height:64px;border-radius:20px;background:var(--surface);box-shadow:var(--shadow);font-size:20px;font-weight:700;letter-spacing:.14em;border:2px solid transparent}
+.choice:hover{border-color:var(--blue)}
+
+/* result */
+#s-result{background:var(--cream)}
+.verdict{position:relative;text-align:center;margin:6px 0 0;font-size:40px;font-weight:900;letter-spacing:.18em}
+.verdict small{display:block;font-size:15px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin-top:2px}
+.spark{position:absolute;top:6px;width:40px;height:40px;animation:pop .6s ease}
+.spark.l{left:calc(50% - 130px)}
+.spark.r{right:calc(50% - 130px);transform:scaleX(-1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.pop{animation:pop .45s ease}
+.compare{display:flex;flex-direction:column;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-radius:18px;padding:4px;gap:4px;box-shadow:var(--shadow)}
+.seg button{height:36px;border-radius:14px;font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.namepill{align-self:center;margin-top:-26px;position:relative;z-index:1;background:var(--blue-soft);color:var(--ink);padding:6px 26px;border-radius:18px;font-size:19px;font-weight:900;letter-spacing:.2em}
+.scorebox{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;background:var(--surface);border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)}
+.scorebox .num{grid-row:span 2;font-size:44px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--blue)}
+.scorebox .num small{font-size:16px;margin-left:2px}
+.scorebox .lbl{font-size:13px;color:var(--muted);letter-spacing:.1em}
+.stars{display:flex;gap:4px}
+.stars svg{width:24px;height:24px}
+.songcard{background:var(--surface);border-radius:22px;padding:14px 18px;box-shadow:var(--shadow)}
+.songcard h3{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.songcard h3 svg{width:18px;height:18px;color:var(--blue)}
+.songcard p{margin:0;font-size:15px;line-height:1.9;letter-spacing:.12em;font-weight:700;white-space:pre-line}
+.actions{display:flex;flex-direction:column;align-items:center;gap:10px;padding-bottom:6px}
+
+/* list & works */
+.withnav{padding-bottom:96px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tabs button{height:40px;border-radius:20px;border:2px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;letter-spacing:.1em;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{position:relative;background:var(--surface);border-radius:20px;border:2px solid var(--line);padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.card:hover{border-color:var(--blue)}
+.card .art{width:86px;height:86px;color:var(--ink)}
+.card .q{width:86px;height:86px;display:grid;place-items:center;font-size:48px;font-weight:900;color:var(--blue);border-radius:50%;background:var(--blue-soft)}
+.card .nm{font-size:15px;font-weight:700;letter-spacing:.12em}
+.card .meta{font-size:12px;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.card .badge{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center}
+.card .badge svg{width:14px;height:14px}
+.card .thumb{width:100%;aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:var(--canvas)}
+.card .thumb img{width:100%;height:100%;display:block}
+.empty{text-align:center;color:var(--muted);font-size:14px;line-height:1.9;letter-spacing:.06em;padding:30px 10px;grid-column:1/-1}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:2px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em;padding:4px}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-current="page"]{color:var(--blue)}
+
+/* sheets */
+.sheet{position:absolute;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:flex-end;z-index:20}
+.sheet .panel{width:100%;background:var(--surface);border-radius:28px 28px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;max-height:85%;overflow-y:auto;animation:enter .25s ease}
+.sheet h3{margin:0;font-size:19px;font-weight:900;letter-spacing:.12em;text-align:center}
+.steps-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+.steps-list li{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:start;font-size:15px;line-height:1.7;letter-spacing:.04em;counter-increment:s}
+.steps-list li::before{content:counter(s);width:32px;height:32px;border-radius:50%;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:900}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 4px;border-bottom:2px solid var(--line);font-weight:700;letter-spacing:.06em}
+.switch{width:54px;height:30px;border-radius:15px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch[aria-checked="true"]{background:var(--blue)}
+.switch[aria-checked="true"]::after{transform:translateX(24px)}
+.sizes{display:flex;gap:6px}
+.sizes button{height:32px;padding-inline:12px;border-radius:16px;border:2px solid var(--line);font-size:13px;font-weight:700}
+.sizes button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.danger{color:#d0555b;font-weight:700;font-size:14px;align-self:center;padding:8px 14px;border-radius:14px}
+.danger.armed{background:#d0555b;color:#fff}
+.close{align-self:center}
+</style>
+
+<div id="app">
+
+  <!-- HOME -->
+  <section class="screen" id="s-home">
+    <h1 class="logo" aria-label="えかきうたチャレンジ">
+      <svg class="note" style="left:-18px;top:18px;color:var(--pink)" viewBox="0 0 24 24"><use href="#i-note"/></svg>
+      <svg class="note" style="right:-14px;top:-4px;color:var(--yellow)" viewBox="0 0 24 24"><use href="#i-note"/></svg>
+      <span class="big" aria-hidden="true"><span>え</span><span>か</span><span>き</span><span>う</span><span>た</span></span>
+      <span class="sub" aria-hidden="true">チャレンジ</span>
+    </h1>
+    <p class="lead">うたを きいて、<br>えを かいてみよう！</p>
+    <div class="mascot" id="mascot"></div>
+    <p class="progress-chip" id="homeProgress"></p>
+    <button class="btn-main" id="btnStart">はじめる <svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+    <button class="btn-sub" id="btnList"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg>うたを えらぶ</button>
+    <button class="btn-sub" id="btnHow"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>あそびかた</button>
+    <button class="btn-sub" id="btnSet"><svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>せってい</button>
+    <svg class="wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C60 10 110 45 170 32 C240 16 290 44 340 30 C370 22 390 24 400 28 V70 H0Z"/></svg>
+  </section>
+
+  <!-- LISTEN -->
+  <section class="screen" id="s-listen" hidden>
+    <div class="topbar">
+      <button class="iconbtn" data-back="home" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+      <h2 id="listenHead">うた 1</h2><span></span>
+    </div>
+    <div class="listen-card">
+      <div class="listen-title"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg><span id="listenTitle">えかきうた</span></div>
+      <div class="lyrics" id="lyrics"></div>
+      <div class="seek">
+        <div class="bar"><i id="barFill"></i><b id="barKnob"></b></div>
+        <div class="times"><span id="tNow">0:00</span><span id="tAll">0:00</span></div>
+      </div>
+      <button class="bigplay" id="btnPlayAll" aria-label="さいせい"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
+    </div>
+    <div class="mystery" id="mystery"></div>
+    <p class="hint-text">なにが できるかな？ うたを きいたら かいてみよう</p>
+    <div class="actions"><button class="btn-main" id="btnToDraw">かいてみる <svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button></div>
+  </section>
+
+  <!-- DRAW -->
+  <section class="screen" id="s-draw" hidden>
+    <div class="topbar">
+      <button class="iconbtn" id="drawBack" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+      <h2 id="stepHead">1/5</h2><span></span>
+    </div>
+    <div class="bubble" id="stepBubble">
+      <button class="playbtn" id="btnLine" aria-label="このフレーズを きく"><svg viewBox="0 0 24 24"><use href="#i-note"/></svg></button>
+      <div class="lyr-wrap"><div class="lyr" id="stepLyric"></div><p class="tip" id="stepTip" hidden></p></div>
+    </div>
+    <div class="paper" id="paper">
+      <canvas id="cv" aria-label="おえかき キャンバス"></canvas>
+      <div class="ghost" id="ghost"></div>
+    </div>
+    <div class="tools">
+      <button class="tool" id="btnUndo"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg>やりなおす</button>
+      <div class="tool palette">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pencil"/></svg>
+        <div class="dots" id="dots"></div>
+      </div>
+      <button class="tool go" id="btnNext"><span class="circle"><svg viewBox="0 0 24 24"><use href="#i-chev"/></svg></span><span id="nextLbl">つぎへ</span></button>
+    </div>
+    <div class="minor">
+      <button class="chip" id="btnHint"><svg viewBox="0 0 24 24"><use href="#i-bulb"/></svg>ヒント</button>
+      <button class="chip" id="btnClearStep"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>ぜんぶ けす</button>
+    </div>
+  </section>
+
+  <!-- GUESS -->
+  <section class="screen" id="s-guess" hidden>
+    <div class="topbar">
+      <button class="iconbtn" id="guessBack" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+      <h2>こたえあわせ</h2><span></span>
+    </div>
+    <p class="guess-q">なにが できたかな？</p>
+    <p class="guess-sub">じぶんの えを みて えらんでね</p>
+    <div class="guess-img"><img id="guessImg" alt="じぶんが かいた え"></div>
+    <div class="choices" id="choices"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="s-result" hidden>
+    <div class="topbar">
+      <button class="iconbtn" data-back="home" aria-label="ホームへ"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+      <span></span><span></span>
+    </div>
+    <h2 class="verdict pop" id="verdict"></h2>
+    <div class="compare">
+      <div class="seg" id="seg">
+        <button data-mode="mine" aria-pressed="false">じぶんの え</button>
+        <button data-mode="both" aria-pressed="true">かさねる</button>
+        <button data-mode="model" aria-pressed="false">おてほん</button>
+      </div>
+      <div class="paper"><canvas id="rcv" aria-label="こたえあわせ"></canvas></div>
+      <div class="namepill" id="namePill"></div>
+    </div>
+    <div class="scorebox">
+      <div class="num" id="scoreNum">0<small>てん</small></div>
+      <div class="lbl">おてほんと そっくり度</div>
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="songcard">
+      <h3><svg viewBox="0 0 24 24"><use href="#i-music"/></svg>この えの えかきうた</h3>
+      <p id="fullLyric"></p>
+    </div>
+    <div class="actions">
+      <button class="btn-main" id="btnNextSong">つぎの えに ちょうせん <svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+      <button class="btn-sub" id="btnRetry"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg>もういちど かく</button>
+    </div>
+  </section>
+
+  <!-- LIST -->
+  <section class="screen withnav" id="s-list" hidden>
+    <div class="topbar"><button class="iconbtn" data-back="home" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button><h2>うた いちらん</h2><span></span></div>
+    <div class="tabs" id="listTabs">
+      <button data-f="all" aria-pressed="true">すべて</button>
+      <button data-f="trad" aria-pressed="false">むかしの うた</button>
+      <button data-f="clear" aria-pressed="false">クリアずみ</button>
+    </div>
+    <div class="grid" id="songGrid"></div>
+  </section>
+
+  <!-- WORKS -->
+  <section class="screen withnav" id="s-works" hidden>
+    <div class="topbar"><button class="iconbtn" data-back="home" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button><h2>わたしの え</h2><span></span></div>
+    <div class="grid" id="worksGrid"></div>
+  </section>
+
+  <nav class="tabbar" id="tabbar" hidden>
+    <button data-go="home"><svg viewBox="0 0 24 24"><use href="#i-home"/></svg>ホーム</button>
+    <button data-go="list"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg>うた いちらん</button>
+    <button data-go="works"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>わたしの え</button>
+  </nav>
+
+  <!-- HOW TO -->
+  <div class="sheet" id="sheetHow" hidden>
+    <div class="panel" role="dialog" aria-label="あそびかた">
+      <h3>あそびかた</h3>
+      <ol class="steps-list">
+        <li>「はじめる」を おすと、なぞの えかきうたが はじまるよ。まずは さいごまで きいてみよう。</li>
+        <li>うたを ひとフレーズずつ ききながら、ゆびや ペンで かいていこう。♪ボタンで なんども きけるよ。</li>
+        <li>まちがえたら「やりなおす」で ひとつ もどせるよ。こまったら「ヒント」を おしてね。</li>
+        <li>かきおわったら、なにが できたか えらんで こたえあわせ！ おてほんと かさねて そっくり度も わかるよ。</li>
+      </ol>
+      <button class="btn-main close" data-close>わかった</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="sheet" id="sheetSet" hidden>
+    <div class="panel" role="dialog" aria-label="せってい">
+      <h3>せってい</h3>
+      <div class="setrow">メロディ <button class="switch" role="switch" id="swSound" aria-label="メロディ"></button></div>
+      <div class="setrow">こえで よみあげ <button class="switch" role="switch" id="swVoice" aria-label="こえで よみあげ"></button></div>
+      <div class="setrow">せんの ふとさ
+        <div class="sizes" id="sizes"><button data-w="4">ほそい</button><button data-w="6">ふつう</button><button data-w="9">ふとい</button></div>
+      </div>
+      <button class="danger" id="btnReset">きろくを ぜんぶ けす</button>
+      <button class="btn-main close" data-close>とじる</button>
+    </div>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V6l10-2v11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="6.5" cy="18" rx="3.3" ry="2.7" fill="currentColor"/><ellipse cx="16.5" cy="15.5" rx="3.3" ry="2.7" fill="currentColor"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M10 18V5l8 2.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="7" cy="18" rx="3.4" ry="2.8" fill="currentColor"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7H5V3M5.5 7A8 8 0 1 1 5 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M15.5 4.5l4 4L9 19l-5 1 1-5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M13 7l4 4" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5zM12 6.5v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M5.5 18.5l1.9-1.9M16.6 7.4l1.9-1.9" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 17h6M10 20.5h4M12 3a6 6 0 0 0-3.5 10.9V15h7v-1.1A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" stroke-linejoin="round" stroke-width="1.8"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 40 40"><path d="M30 6l-4 8M36 20l-9 1M24 2l-1 8" stroke="#f3c342" stroke-width="3.5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- shapes ---------- */
+const C = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
+const E = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0Z`;
+function flowerOutline(cx, cy, R, r, n) {
+  const pts = [];
+  for (let k = 0; k < n; k++) {
+    const a = (-90 + 180 / n + 360 * k / n) * Math.PI / 180;
+    pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
+  }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let k = 1; k <= n; k++) {
+    const p = pts[k % n];
+    d += `A${r} ${r} 0 1 1 ${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
+  }
+  return d + 'Z';
+}
+// ひらがな「の」と数字「6」の形（文字絵用）
+const NO = (x, y) => `M${x + 2} ${y - 12}C${x - 4} ${y + 2} ${x - 10} ${y + 16} ${x - 16} ${y + 18}C${x - 24} ${y + 20} ${x - 26} ${y + 6} ${x - 20} ${y - 4}C${x - 12} ${y - 18} ${x + 14} ${y - 18} ${x + 20} ${y - 4}C${x + 26} ${y + 10} ${x + 14} ${y + 20} ${x + 2} ${y + 22}`;
+const SIX = (x, y, k = 1) => `M${x + 5 * k} ${y - 12 * k}C${x - 5 * k} ${y - 8 * k} ${x - 7 * k} ${y + 3 * k} ${x - 5 * k} ${y + 7 * k}C${x - 3 * k} ${y + 12 * k} ${x + 7 * k} ${y + 10 * k} ${x + 6 * k} ${y + 3 * k}C${x + 5 * k} ${y - 2 * k} ${x - 3 * k} ${y - 2 * k} ${x - 5 * k} ${y + 5 * k}`;
+const WAVE = y => `M114 ${y}q9 -8 18 0t18 0t18 0t18 0`;
+const INK = '#2d3857';
+const FILL = { ink: INK, pink: '#f4a3a8', yellow: '#f3c342', paper: '#fffdf7' };
+
+const SONGS = [
+  { id: 'usagi', name: 'うさぎ', seed: 3, steps: [
+    { lyric: 'まる まる まる\nまるを かいて', shapes: [{ d: C(150, 185, 72) }] },
+    { lyric: 'まるの うえに\nながい みみ', shapes: [
+      { d: 'M122 122C104 70 110 32 126 32C142 32 146 72 140 115' },
+      { d: 'M160 115C154 72 158 32 174 32C190 32 196 70 178 122' }] },
+    { lyric: 'てんてん ふたつ\nめを かいて', shapes: [{ d: C(126, 180, 6), fill: 'ink' }, { d: C(174, 180, 6), fill: 'ink' }] },
+    { lyric: 'ちいさな はなと\nくちを かく', shapes: [
+      { d: 'M145 197L155 197L150 203Z', fill: 'ink' },
+      { d: 'M150 203L150 209M139 209Q144.5 216 150 209Q155.5 216 161 209' }] },
+    { lyric: 'ほっぺを かいて\nできあがり', shapes: [
+      { d: C(114, 204, 10), fill: 'pink', stroke: false }, { d: C(186, 204, 10), fill: 'pink', stroke: false }] }
+  ]},
+  { id: 'kuma', name: 'くま', seed: 11, steps: [
+    { lyric: 'おおきな まるを\nひとつ かいて', shapes: [{ d: C(150, 170, 80) }] },
+    { lyric: 'ちいさな はんぶん\nみみ ふたつ', shapes: [
+      { d: 'M79 133A28 28 0 1 1 119 96' }, { d: 'M221 133A28 28 0 1 0 181 96' }] },
+    { lyric: 'よこながの まるで\nおくちの まわり', shapes: [{ d: E(150, 195, 34, 26) }] },
+    { lyric: 'くろい おめめと\nおはなを ぽちっ', shapes: [
+      { d: C(116, 156, 7), fill: 'ink' }, { d: C(184, 156, 7), fill: 'ink' }, { d: E(150, 184, 10, 7), fill: 'ink' }] },
+    { lyric: 'にっこり わらって\nできあがり', shapes: [{ d: 'M150 191L150 202M138 203Q150 214 162 203' }] }
+  ]},
+  { id: 'sakana', name: 'さかな', seed: 7, steps: [
+    { lyric: 'はっぱを いちまい\nよこむきに', shapes: [{ d: 'M48 150Q140 50 222 150Q140 250 48 150Z' }] },
+    { lyric: 'さんかく しっぽを\nぴょこんと つけて', shapes: [{ d: 'M222 150L262 114L262 186Z' }] },
+    { lyric: 'まるい おめめを\nひとつ かいて', shapes: [{ d: C(92, 138, 11) }, { d: C(94, 138, 4), fill: 'ink' }] },
+    { lyric: 'ちいさな おくち\nにっこりと', shapes: [{ d: 'M60 154Q67 160 76 156' }] },
+    { lyric: 'しましま もようで\nできあがり', shapes: [{ d: 'M132 104Q146 150 132 196' }, { d: 'M165 112Q179 150 165 188' }] }
+  ]},
+  { id: 'kuruma', name: 'くるま', seed: 21, steps: [
+    { lyric: 'ながい しかくを\nよこに かいて', shapes: [{ d: 'M46 165H254Q262 165 262 173V197Q262 205 254 205H46Q38 205 38 197V173Q38 165 46 165Z' }] },
+    { lyric: 'うえに おやまの\nやねを のせ', shapes: [{ d: 'M78 165L108 110L196 110L226 165' }] },
+    { lyric: 'まどを ふたつ\nならべて かいて', shapes: [{ d: 'M100 156L118 122L147 122L147 156Z' }, { d: 'M157 156L157 122L186 122L206 156Z' }] },
+    { lyric: 'まるい まるが\nころころ ふたつ', shapes: [
+      { d: C(95, 210, 22), fill: 'paper' }, { d: C(205, 210, 22), fill: 'paper' },
+      { d: C(95, 210, 6), fill: 'ink' }, { d: C(205, 210, 6), fill: 'ink' }] },
+    { lyric: 'ぴかっと ひかって\nできあがり', shapes: [{ d: C(248, 182, 7), fill: 'yellow' }] }
+  ]},
+  { id: 'hana', name: 'はな', seed: 5, steps: [
+    { lyric: 'ちいさな まるを\nひとつ かいて', shapes: [{ d: C(150, 115, 20) }] },
+    { lyric: 'まわりに ぐるりと\nやまが いつつ', shapes: [{ d: flowerOutline(150, 115, 44, 28, 5) }] },
+    { lyric: 'まっすぐ ながい\nせんを ひいて', shapes: [{ d: 'M150 159Q146 215 150 272' }] },
+    { lyric: 'はっぱを ふたつ\nひらひら つけて', shapes: [
+      { d: 'M149 238Q118 206 96 222Q118 250 149 238Z' }, { d: 'M150 218Q182 188 206 204Q184 232 150 218Z' }] },
+    { lyric: 'まんなか にっこり\nできあがり', shapes: [
+      { d: C(143, 111, 3), fill: 'ink' }, { d: C(157, 111, 3), fill: 'ink' }, { d: 'M142 121Q150 128 158 121' }] }
+  ]},
+  { id: 'tori', name: 'ことり', seed: 13, steps: [
+    { lyric: 'たまごを よこに\nころんと かいて', shapes: [{ d: E(150, 170, 85, 65) }] },
+    { lyric: 'とんがり さんかく\nひだりに つけて', shapes: [{ d: 'M72 152L40 160L72 170' }] },
+    { lyric: 'くろい てんてん\nひとつ ぽちっ', shapes: [{ d: C(105, 150, 6), fill: 'ink' }] },
+    { lyric: 'おなかに ふわりと\nはねを かく', shapes: [{ d: 'M140 172Q178 146 206 172Q176 202 140 186' }] },
+    { lyric: 'うしろに ぴょんと\nしっぽを つけて', shapes: [{ d: 'M230 148L266 128L256 160L272 172L233 184' }] },
+    { lyric: 'ほそい あし にほん\nできあがり', shapes: [
+      { d: 'M132 233L128 260M118 264L128 260L138 264' }, { d: 'M168 233L172 260M162 264L172 260L182 264' }] }
+  ]},
+
+  /* ---- むかしから つたわる えかきうた（伝承・作者不詳） ---- */
+  { id: 'henohe', name: 'かお', trad: 'へのへのもへじ', seed: 17, steps: [
+    { lyric: 'へ の', tip: 'ひだりの まゆげと おめめ', shapes: [{ d: 'M84 108L106 90L132 112' }, { d: NO(110, 142) }] },
+    { lyric: 'へ の', tip: 'みぎの まゆげと おめめ', shapes: [{ d: 'M168 112L194 90L216 108' }, { d: NO(194, 142) }] },
+    { lyric: 'も', tip: 'まんなかに おはな', shapes: [{ d: 'M148 158C144 184 142 200 152 206C160 210 168 204 170 194' }, { d: 'M134 172H164M136 186H162' }] },
+    { lyric: 'へ', tip: 'したに おくち', shapes: [{ d: 'M118 234L144 218L182 238' }] },
+    { lyric: 'じ', tip: 'おおきく かこんで かおの まわり', shapes: [
+      { d: 'M96 56C52 110 54 236 140 268C214 280 262 214 250 130C246 100 234 76 216 60' }, { d: 'M228 38L234 52M244 32L250 46' }] }
+  ]},
+  { id: 'cook', name: 'コックさん', trad: 'かわいいコックさん', seed: 23, steps: [
+    { lyric: 'ぼうが いっぽん\nあったとさ', tip: 'よこに ぼうを 1ぽん', shapes: [{ d: 'M110 78H190' }] },
+    { lyric: 'はっぱかな？ はっぱじゃないよ\nかえるだよ', tip: 'ぼうの うえに ふわふわ ぼうし', shapes: [{ d: 'M110 78C88 66 96 36 122 42C130 20 170 20 178 42C204 36 212 66 190 78' }] },
+    { lyric: 'かえるじゃないよ\nあひるだよ', tip: 'ぼうの したに おかお', shapes: [{ d: 'M112 80C106 136 128 156 150 156C172 156 194 136 188 80' }] },
+    { lyric: 'ろくがつ むいかに\nあめ ざーざー ふってきて', tip: '6を ふたつで おみみ、あめで おめめと おくち', shapes: [
+      { d: SIX(100, 114) }, { d: SIX(200, 114) }, { d: 'M136 104V116M164 104V116' }, { d: 'M140 134Q150 142 160 134' }] },
+    { lyric: 'さんかく じょうぎに\nひび いって', tip: 'さんかくの からだと ひび', shapes: [{ d: 'M150 158L84 252L216 252Z' }, { d: 'M112 222L122 232L112 242' }] },
+    { lyric: 'あんぱん ふたつ\nまめ みっつ', tip: 'りょうての まると ボタン', shapes: [
+      { d: C(106, 204, 13), fill: 'paper' }, { d: C(194, 204, 13), fill: 'paper' },
+      { d: C(150, 186, 4), fill: 'ink' }, { d: C(150, 208, 4), fill: 'ink' }, { d: C(150, 230, 4), fill: 'ink' }] },
+    { lyric: 'コッペパン ふたつ\nくださいな', tip: 'あしを ふたつ', shapes: [{ d: E(122, 264, 20, 10), fill: 'paper' }, { d: E(178, 264, 20, 10), fill: 'paper' }] },
+    { lyric: 'あっというまに\nかわいい コックさん', tip: 'ほっぺを かいて できあがり', shapes: [
+      { d: C(126, 128, 8), fill: 'pink', stroke: false }, { d: C(174, 128, 8), fill: 'pink', stroke: false }] }
+  ]},
+  { id: 'tsuru', name: 'おじいさん', trad: 'つるさんは まるまるむし', seed: 29, steps: [
+    { lyric: 'つ', tip: 'おおきな「つ」で あたま', shapes: [{ d: 'M70 124C80 50 220 40 232 112C236 140 222 152 206 146' }] },
+    { lyric: 'る', tip: 'ひだりに ちいさな「る」で おみみ', shapes: [{ d: 'M56 128H82L62 158C78 148 96 158 90 174C84 188 64 186 66 176C68 168 80 170 82 176' }] },
+    { lyric: 'さん', tip: '「三」で おでこの しわ', shapes: [{ d: 'M124 94H176M120 106H180M124 118H176' }] },
+    { lyric: 'は', tip: '「ハ」で まゆげ', shapes: [{ d: 'M130 134L114 146M170 134L186 146' }] },
+    { lyric: 'まる まる', tip: 'まるを ふたつ おめめ', shapes: [{ d: C(122, 162, 10) }, { d: C(178, 162, 10) }] },
+    { lyric: 'む', tip: '「ム」で おはなと おくち', shapes: [{ d: 'M154 176L140 204L168 202M160 190L172 208' }] },
+    { lyric: 'し', tip: 'おおきな「し」で あご', shapes: [{ d: 'M74 132C72 200 100 262 150 262C200 262 226 222 232 192' }] }
+  ]},
+  { id: 'kobuta', name: 'こぶた', trad: 'まんまるちゃん', seed: 31, steps: [
+    { lyric: 'まんまるちゃん\nまんまるちゃん', tip: 'おおきな まる', shapes: [{ d: C(150, 160, 85) }] },
+    { lyric: 'まんまーるちゃーん', tip: 'まんなかに よこながの まる（はな）', shapes: [{ d: E(150, 180, 32, 22) }] },
+    { lyric: 'ちいさい おふねに\nのせられて', tip: 'したに おふねの かたち（くち）', shapes: [{ d: 'M126 218H174Q166 234 150 234Q134 234 126 218Z' }] },
+    { lyric: 'おとうさん おかあさん\nさよおなら', tip: 'はなの あなを ふたつ', shapes: [{ d: C(138, 180, 5), fill: 'ink' }, { d: C(162, 180, 5), fill: 'ink' }] },
+    { lyric: 'ろくろくちゃん\nさんじゅうろく', tip: '6を ふたつで おめめ', shapes: [{ d: SIX(114, 128, 1.1) }, { d: SIX(186, 128, 1.1) }] },
+    { lyric: 'ろくろくちゃん\nふじのやま', tip: 'やまを ふたつで おみみ', shapes: [{ d: 'M82 110L78 60L124 80' }, { d: 'M176 80L222 60L218 110' }] }
+  ]},
+  { id: 'ahiru', name: 'あひる', trad: 'あひるのこ', seed: 37, steps: [
+    { lyric: 'にーちゃんが', tip: 'おおきな「2」（あたまと くび）', shapes: [{ d: 'M76 86C74 46 132 44 132 84C132 118 96 146 84 196H222' }] },
+    { lyric: 'さんえん もらって', tip: 'よこむきの「3」（せなかと しっぽ）', shapes: [{ d: 'M128 124C160 104 196 116 184 140C214 140 236 166 222 196' }] },
+    { lyric: 'まめ かって', tip: 'まめは おめめ', shapes: [{ d: C(106, 78, 6), fill: 'ink' }] },
+    { lyric: 'くちばし\nとんがらかして', tip: 'あたまの よこに くちばし', shapes: [{ d: 'M76 76L44 88L78 96' }] },
+    { lyric: 'あひるのこ', tip: 'はねと みずを かいて できあがり', shapes: [
+      { d: 'M130 168Q166 142 196 166Q164 186 130 168' }, { d: 'M40 222Q60 212 80 222T120 222T160 222T200 222T240 222T280 222' }] }
+  ]},
+  { id: 'tako', name: 'たこ', trad: 'たこにゅうどう', seed: 41, steps: [
+    { lyric: 'みみずが さんびき\nよってきて', tip: 'なみなみの せんを 3ぼん（おでこ）', shapes: [{ d: WAVE(66) }, { d: WAVE(80) }, { d: WAVE(94) }] },
+    { lyric: 'おせんべ さんまい\nたべました', tip: 'まるを 3つ（おめめと おくち）', shapes: [{ d: C(120, 124, 12) }, { d: C(180, 124, 12) }, { d: C(150, 152, 10) }] },
+    { lyric: 'あめが ザァザァ\nふってきて', tip: 'たての せんを たくさん（あし）', shapes: [80, 108, 136, 164, 192, 220].map(x => ({ d: `M${x} 180q-6 44 ${x < 150 ? -12 : 12} 86` })) },
+    { lyric: 'あられも ポツポツ\nふってきて', tip: 'てんてんを うって（きゅうばん）', shapes: [80, 108, 136, 164, 192, 220].flatMap(x => [C(x + (x < 150 ? -4 : 4), 214, 3.5), C(x + (x < 150 ? -8 : 8), 240, 3.5)]).map(d => ({ d, fill: 'ink' })) },
+    { lyric: 'あっというまに\nたこにゅうどう', tip: 'あたまを かいて できあがり', shapes: [{ d: 'M70 176C56 62 120 28 150 28C180 28 244 62 230 176Q150 186 70 176Z' }] }
+  ]}
+];
+const DECOYS = ['ねこ', 'いぬ', 'かめ', 'りんご', 'おうち', 'ふね', 'きのこ', 'ほし', 'ぞう', 'ひこうき', 'ロボット', 'ペンギン'];
+
+const MASCOT = [
+  { d: E(150, 175, 85, 70) },
+  { d: 'M84 132L92 72L132 110' }, { d: 'M168 110L208 72L216 132' },
+  { d: C(122, 168, 7), fill: 'ink' }, { d: C(178, 168, 7), fill: 'ink' },
+  { d: 'M144 186L156 186L150 192Z', fill: 'ink' },
+  { d: 'M150 192L150 197M139 198Q144.5 205 150 198Q155.5 205 161 198' },
+  { d: C(106, 192, 10), fill: 'pink', stroke: false }, { d: C(194, 192, 10), fill: 'pink', stroke: false },
+  { d: 'M108 200L62 208M110 188L64 184M192 200L238 208M190 188L236 184' }
+];
+
+function shapeSVG(sh, sw = 6) {
+  const fill = !sh.fill ? 'none' : sh.fill === 'ink' ? 'currentColor' : sh.fill === 'paper' ? 'var(--pf)' : FILL[sh.fill];
+  const stroke = sh.stroke === false ? 'none' : 'currentColor';
+  return `<path d="${sh.d}" style="fill:${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+const allShapes = (song, upto) => song.steps.slice(0, upto ?? song.steps.length).flatMap(s => s.shapes);
+const svgOf = (shapes, extra = '') => `<svg viewBox="0 0 300 300" aria-hidden="true">${shapes.map(s => shapeSVG(s)).join('')}${extra}</svg>`;
+
+/* ---------- storage ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+const settings = Object.assign({ sound: true, voice: true, width: 6 }, store.get('ekaki-settings', {}));
+let progress = store.get('ekaki-progress', {});   // id -> {best, correct}
+let works = store.get('ekaki-works', []);         // [{id, img, score, correct, at}]
+const saveAll = () => { store.set('ekaki-settings', settings); store.set('ekaki-progress', progress); store.set('ekaki-works', works); };
+const isClear = id => !!(progress[id] && progress[id].correct);
+
+/* ---------- audio ---------- */
+const SCALE = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99];
+const BEAT = 0.3;
+let actx = null, token = 0, timers = [], nodes = [];
+function ac() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, t, dur, vol) {
+  const c = ac(); if (!c) return;
+  [[freq, 'triangle', vol], [freq * 2, 'sine', vol * 0.25]].forEach(([f, type, v]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(v, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t); o.stop(t + dur + 0.05);
+    nodes.push(o);
+  });
+}
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function melody(seed, line, n) {
+  const r = rng(seed * 131 + (line % 2) * 17);   // odd/even lines share a phrase, like a real song
+  let i = 4; const out = [];
+  for (let k = 0; k < n; k++) {
+    const step = [-2, -1, -1, 0, 1, 1, 2][Math.floor(r() * 7)];
+    i = Math.max(1, Math.min(8, i + step));
+    out.push(i);
+  }
+  if (n) out[n - 1] = line % 2 ? 0 : 4;
+  return out;
+}
+function timeline(text) {
+  let t = 0, span = 0; const ev = [];
+  for (const ch of text) {
+    if (ch === '\n') { t += 0.3; continue; }
+    if (ch === ' ') { t += 0.14; span++; continue; }
+    const small = 'ゃゅょっぁぃぅぇぉャュョッァィゥェォー'.includes(ch);
+    ev.push({ t, span, dur: small ? BEAT * 0.5 : BEAT });
+    t += small ? BEAT * 0.5 : BEAT; span++;
+  }
+  return { ev, total: t + 0.35 };
+}
+const lineDur = text => timeline(text).total;
+function stopAudio() {
+  token++;
+  timers.forEach(clearTimeout); timers = [];
+  nodes.forEach(n => { try { n.stop(); } catch {} }); nodes = [];
+  try { speechSynthesis.cancel(); } catch {}
+}
+function karaoke(el, text) {
+  el.innerHTML = ''; const spans = [];
+  for (const ch of text) {
+    if (ch === '\n') { el.appendChild(document.createElement('br')); continue; }
+    const s = document.createElement('span'); s.className = 'ch'; s.textContent = ch;
+    el.appendChild(s); spans.push(s);
+  }
+  return spans;
+}
+function speak(text) {
+  if (!settings.voice || !('speechSynthesis' in window)) return;
+  try {
+    const u = new SpeechSynthesisUtterance(text.replace(/\n/g, '、'));
+    u.lang = 'ja-JP'; u.rate = 0.85; u.pitch = 1.25;
+    speechSynthesis.speak(u);
+  } catch {}
+}
+function playLine(song, idx, spans, onDone) {
+  const my = token;
+  const text = song.steps[idx].lyric;
+  const { ev, total } = timeline(text);
+  const notes = melody(song.seed, idx, ev.length);
+  spans.forEach(s => s.classList.remove('on'));
+  const c = settings.sound ? ac() : null;
+  const t0 = c ? c.currentTime + 0.06 : 0;
+  const vol = settings.voice ? 0.07 : 0.14;
+  ev.forEach((e, k) => {
+    const last = k === ev.length - 1;
+    if (c) tone(SCALE[notes[k]], t0 + e.t, last ? BEAT * 2.2 : e.dur * 1.4, vol);
+    timers.push(setTimeout(() => { if (my !== token) return; for (let j = 0; j <= e.span; j++) spans[j] && spans[j].classList.add('on'); }, e.t * 1000 + 60));
+  });
+  speak(text);
+  timers.push(setTimeout(() => { if (my !== token) return; spans.forEach(s => s.classList.add('on')); onDone && onDone(); }, total * 1000 + 60));
+  return total;
+}
+
+/* ---------- screens ---------- */
+const SCREENS = ['home', 'listen', 'draw', 'guess', 'result', 'list', 'works'];
+function show(name) {
+  stopAudio(); cancelAnimationFrame(rafId);
+  SCREENS.forEach(s => { $('#s-' + s).hidden = s !== name; });
+  const nav = name === 'list' || name === 'works';
+  $('#tabbar').hidden = !nav;
+  $$('#tabbar button').forEach(b => b.toggleAttribute('aria-current', false));
+  if (nav) $(`#tabbar [data-go="${name}"]`).setAttribute('aria-current', 'page');
+  if (name === 'home') renderHome();
+  if (name === 'list') renderList();
+  if (name === 'works') renderWorks();
+  $('#s-' + name).scrollTop = 0;
+}
+$$('[data-back]').forEach(b => b.addEventListener('click', () => show(b.dataset.back)));
+$$('#tabbar button').forEach(b => b.addEventListener('click', () => show(b.dataset.go)));
+
+const state = { song: null, step: 0, strokes: [], color: INK, mode: 'both', score: 0, correct: false };
+
+/* home */
+$('#mascot').innerHTML = svgOf(MASCOT,
+  `<g transform="translate(246 196) rotate(28)"><rect x="-13" y="-92" width="26" height="100" rx="5" fill="#f3c342" stroke="currentColor" stroke-width="6"/><path d="M-13 8L0 38L13 8Z" fill="#f7dfb0" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><path d="M-4 29L0 38L4 29Z" fill="currentColor"/><path d="M-13 -72H13" stroke="currentColor" stroke-width="5"/></g>`);
+function renderHome() {
+  const n = SONGS.filter(s => isClear(s.id)).length;
+  $('#homeProgress').textContent = n ? `クリア ${n} / ${SONGS.length}` : `ぜんぶで ${SONGS.length}きょく`;
+}
+function nextSong(afterId) {
+  const start = afterId ? SONGS.findIndex(s => s.id === afterId) + 1 : 0;
+  for (let k = 0; k < SONGS.length; k++) {
+    const s = SONGS[(start + k) % SONGS.length];
+    if (!isClear(s.id)) return s;
+  }
+  return SONGS[start % SONGS.length];
+}
+$('#btnStart').addEventListener('click', () => openListen(nextSong()));
+$('#btnList').addEventListener('click', () => show('list'));
+$('#btnHow').addEventListener('click', () => { $('#sheetHow').hidden = false; });
+$('#btnSet').addEventListener('click', openSettings);
+
+/* listen */
+let rafId = 0;
+const lp = { i: 0, playing: false, lineStart: 0, durs: [], spans: [] };
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function openListen(song) {
+  state.song = song;
+  show('listen');
+  const idx = SONGS.indexOf(song) + 1;
+  $('#listenHead').textContent = `うた ${idx}`;
+  $('#listenTitle').textContent = song.trad ? `むかしの うた「${song.trad}」` : 'えかきうた';
+  const box = $('#lyrics'); box.innerHTML = '';
+  lp.spans = song.steps.map(st => { const p = document.createElement('p'); box.appendChild(p); return karaoke(p, st.lyric); });
+  lp.durs = song.steps.map(st => lineDur(st.lyric) + 0.25);
+  lp.i = 0; lp.playing = false;
+  $('#tAll').textContent = fmt(lp.durs.reduce((a, b) => a + b, 0));
+  setProgress(0);
+  setPlayIcon();
+  $('#mystery').innerHTML = isClear(song.id)
+    ? `<div class="art">${svgOf(allShapes(song))}</div>`
+    : `<div class="cloud" aria-label="なにが できるかな">?</div>`;
+  togglePlay();
+}
+function setPlayIcon() {
+  $('#btnPlayAll').innerHTML = `<svg viewBox="0 0 24 24"><use href="#i-${lp.playing ? 'pause' : 'play'}"/></svg>`;
+  $('#btnPlayAll').setAttribute('aria-label', lp.playing ? 'とめる' : 'さいせい');
+}
+function setProgress(sec) {
+  const all = lp.durs.reduce((a, b) => a + b, 0);
+  const pct = Math.min(100, sec / all * 100);
+  $('#barFill').style.width = pct + '%'; $('#barKnob').style.left = pct + '%';
+  $('#tNow').textContent = fmt(sec);
+}
+function tick() {
+  if (!lp.playing) return;
+  const done = lp.durs.slice(0, lp.i).reduce((a, b) => a + b, 0);
+  setProgress(done + Math.min(lp.durs[lp.i] || 0, (performance.now() - lp.lineStart) / 1000));
+  rafId = requestAnimationFrame(tick);
+}
+function playFrom(i) {
+  const ps = $$('#lyrics p');
+  ps.forEach((p, k) => { p.classList.toggle('cur', k === i); p.classList.toggle('done', k < i); });
+  if (i >= state.song.steps.length) {
+    lp.playing = false; lp.i = 0; setPlayIcon(); setProgress(lp.durs.reduce((a, b) => a + b, 0));
+    ps.forEach(p => p.classList.remove('done'));
+    return;
+  }
+  lp.i = i; lp.lineStart = performance.now();
+  playLine(state.song, i, lp.spans[i], () => timers.push(setTimeout(() => playFrom(i + 1), 250)));
+}
+function togglePlay() {
+  if (lp.playing) { stopAudio(); lp.playing = false; cancelAnimationFrame(rafId); setPlayIcon(); return; }
+  lp.playing = true; setPlayIcon(); playFrom(lp.i); cancelAnimationFrame(rafId); rafId = requestAnimationFrame(tick);
+}
+$('#btnPlayAll').addEventListener('click', togglePlay);
+$('#btnToDraw').addEventListener('click', () => startDraw(state.song));
+
+/* draw */
+const cv = $('#cv'), ctx = cv.getContext('2d');
+const COLORS = [INK, '#ef6b6b', '#4a86e0', '#4f9d68', '#f3c342'];
+const dotsEl = $('#dots');
+COLORS.forEach((c, k) => {
+  const b = document.createElement('button');
+  b.className = 'dot'; b.style.background = c; b.setAttribute('aria-label', ['くろ', 'あか', 'あお', 'みどり', 'きいろ'][k]);
+  b.setAttribute('aria-pressed', c === state.color);
+  b.addEventListener('click', () => { state.color = c; $$('.dot').forEach(d => d.setAttribute('aria-pressed', d === b)); });
+  dotsEl.appendChild(b);
+});
+function fitCanvas(c) {
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  c.width = Math.max(1, Math.round(r.width * dpr)); c.height = Math.max(1, Math.round(r.height * dpr));
+  return c.width / 300;
+}
+function strokePath(x, s) {
+  const p = s.pts;
+  x.strokeStyle = x.fillStyle = s.color;
+  x.lineWidth = s.w; x.lineCap = 'round'; x.lineJoin = 'round';
+  if (p.length === 1) { x.beginPath(); x.arc(p[0][0], p[0][1], s.w / 2, 0, Math.PI * 2); x.fill(); return; }
+  x.beginPath(); x.moveTo(p[0][0], p[0][1]);
+  for (let i = 1; i < p.length - 1; i++) {
+    const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+    x.quadraticCurveTo(p[i][0], p[i][1], mx, my);
+  }
+  const l = p[p.length - 1]; x.lineTo(l[0], l[1]); x.stroke();
+}
+function drawRef(x, shapes, color, lw, paperFill) {
+  shapes.forEach(sh => {
+    const path = new Path2D(sh.d);
+    if (sh.fill) { x.fillStyle = color || (sh.fill === 'paper' ? paperFill : FILL[sh.fill]); if (!(color && sh.fill === 'paper')) x.fill(path); }
+    if (sh.stroke !== false) { x.strokeStyle = color || INK; x.lineWidth = lw; x.lineCap = 'round'; x.lineJoin = 'round'; x.stroke(path); }
+  });
+}
+function redraw() {
+  const k = cv.width / 300;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  state.strokes.forEach(s => strokePath(ctx, s));
+}
+function startDraw(song) {
+  state.song = song; state.step = 0; state.strokes = [];
+  show('draw');
+  fitCanvas(cv); redraw();
+  renderStep(true);
+}
+function renderStep(autoplay) {
+  const song = state.song, n = song.steps.length, i = state.step;
+  $('#stepHead').textContent = `${i + 1}/${n}`;
+  const spans = karaoke($('#stepLyric'), song.steps[i].lyric);
+  spans.forEach(s => s.classList.add('on'));
+  state.stepSpans = spans;
+  const tip = song.steps[i].tip || '';
+  $('#stepTip').textContent = tip; $('#stepTip').hidden = !tip;
+  const last = i === n - 1;
+  $('#btnNext').classList.toggle('finish', last);
+  $('#btnNext .circle').innerHTML = `<svg viewBox="0 0 24 24"><use href="#i-${last ? 'check' : 'chev'}"/></svg>`;
+  $('#nextLbl').textContent = last ? 'できた！' : 'つぎへ';
+  $('#ghost').classList.remove('show');
+  $('#ghost').innerHTML = svgOf(song.steps[i].shapes);
+  updateUndo();
+  if (autoplay) playStepLine();
+}
+function playStepLine() {
+  stopAudio();
+  const b = $('#stepBubble'); b.classList.add('playing');
+  playLine(state.song, state.step, state.stepSpans, () => b.classList.remove('playing'));
+}
+function updateUndo() {
+  $('#btnUndo').disabled = !state.strokes.some(s => s.step === state.step);
+  $('#btnClearStep').hidden = !state.strokes.length;
+}
+$('#btnLine').addEventListener('click', playStepLine);
+$('#btnNext').addEventListener('click', () => {
+  if (state.step < state.song.steps.length - 1) { state.step++; renderStep(true); }
+  else openGuess();
+});
+$('#drawBack').addEventListener('click', () => {
+  if (state.step > 0) { state.step--; renderStep(false); } else openListen(state.song);
+});
+$('#btnUndo').addEventListener('click', () => {
+  for (let k = state.strokes.length - 1; k >= 0; k--) if (state.strokes[k].step === state.step) { state.strokes.splice(k, 1); break; }
+  redraw(); updateUndo();
+});
+let clearArmed = null;
+$('#btnClearStep').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!clearArmed) {
+    b.lastChild.textContent = 'もういちど おすと ぜんぶ けすよ';
+    clearArmed = setTimeout(() => { clearArmed = null; b.lastChild.textContent = 'ぜんぶ けす'; }, 2500);
+    return;
+  }
+  clearTimeout(clearArmed); clearArmed = null; b.lastChild.textContent = 'ぜんぶ けす';
+  state.strokes = []; state.step = 0; redraw(); renderStep(true);
+});
+let hintT = 0;
+$('#btnHint').addEventListener('click', () => {
+  $('#ghost').classList.add('show'); clearTimeout(hintT);
+  hintT = setTimeout(() => $('#ghost').classList.remove('show'), 1800);
+});
+let cur = null;
+function pt(e) {
+  const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) / r.width * 300, (e.clientY - r.top) / r.height * 300];
+}
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch {}
+  cur = { color: state.color, w: settings.width, step: state.step, pts: [pt(e)] };
+  state.strokes.push(cur); redraw();
+});
+cv.addEventListener('pointermove', e => {
+  if (!cur) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  (evs.length ? evs : [e]).forEach(ev => cur.pts.push(pt(ev)));
+  redraw();
+});
+const endStroke = () => { if (cur) { cur = null; updateUndo(); } };
+cv.addEventListener('pointerup', endStroke);
+cv.addEventListener('pointercancel', endStroke);
+window.addEventListener('resize', () => {
+  if (!$('#s-draw').hidden) { fitCanvas(cv); redraw(); }
+  if (!$('#s-result').hidden) renderResultCanvas();
+});
+
+/* guess */
+function snapshot(size) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const x = c.getContext('2d'); x.fillStyle = FILL.paper; x.fillRect(0, 0, size, size);
+  x.setTransform(size / 300, 0, 0, size / 300, 0, 0);
+  state.strokes.forEach(s => strokePath(x, s));
+  return c.toDataURL('image/jpeg', 0.82);
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function openGuess() {
+  show('guess');
+  state.img = snapshot(280);
+  $('#guessImg').src = state.img;
+  const others = shuffle([...SONGS.map(s => s.name), ...DECOYS].filter(n => n !== state.song.name)).slice(0, 3);
+  const box = $('#choices'); box.innerHTML = '';
+  shuffle([state.song.name, ...others]).forEach(name => {
+    const b = document.createElement('button'); b.className = 'choice'; b.textContent = name;
+    b.addEventListener('click', () => finish(name === state.song.name));
+    box.appendChild(b);
+  });
+}
+$('#guessBack').addEventListener('click', () => { show('draw'); fitCanvas(cv); redraw(); renderStep(false); });
+
+/* scoring: compare shapes after normalizing position & size */
+function bboxOfStrokes(strokes) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  strokes.forEach(s => s.pts.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }));
+  return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+}
+const refBoxCache = {};
+function bboxOfRef(song) {
+  if (refBoxCache[song.id]) return refBoxCache[song.id];
+  const c = document.createElement('canvas'); c.width = c.height = 300;
+  const x = c.getContext('2d'); drawRef(x, allShapes(song), '#000', 2);
+  const d = x.getImageData(0, 0, 300, 300).data;
+  let x0 = 300, y0 = 300, x1 = 0, y1 = 0;
+  for (let y = 0; y < 300; y++) for (let xx = 0; xx < 300; xx++) if (d[(y * 300 + xx) * 4 + 3] > 20) { x0 = Math.min(x0, xx); y0 = Math.min(y0, y); x1 = Math.max(x1, xx); y1 = Math.max(y1, y); }
+  return (refBoxCache[song.id] = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 });
+}
+function fitT(box, size, m) { const s = (size - 2 * m) / Math.max(box.w, box.h); return { s, ox: size / 2 - (box.x + box.w / 2) * s, oy: size / 2 - (box.y + box.h / 2) * s }; }
+function mask(size, fn) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const x = c.getContext('2d'); fn(x);
+  const d = x.getImageData(0, 0, size, size).data, m = new Uint8Array(size * size);
+  for (let i = 0; i < m.length; i++) m[i] = d[i * 4 + 3] > 40 ? 1 : 0;
+  return m;
+}
+function computeScore() {
+  if (!state.strokes.length) return 0;
+  const S = 96, M = 8;
+  const tu = fitT(bboxOfStrokes(state.strokes), S, M), tr = fitT(bboxOfRef(state.song), S, M);
+  const user = lw => mask(S, x => { x.setTransform(tu.s, 0, 0, tu.s, tu.ox, tu.oy); state.strokes.forEach(s => strokePath(x, { ...s, color: '#000', w: lw / tu.s })); });
+  const ref = lw => mask(S, x => { x.setTransform(tr.s, 0, 0, tr.s, tr.ox, tr.oy); drawRef(x, allShapes(state.song), '#000', lw / tr.s); });
+  const uT = user(2.5), uW = user(11), rT = ref(2.5), rW = ref(11);
+  let uc = 0, uh = 0, rc = 0, rh = 0;
+  for (let i = 0; i < uT.length; i++) {
+    if (uT[i]) { uc++; if (rW[i]) uh++; }
+    if (rT[i]) { rc++; if (uW[i]) rh++; }
+  }
+  const P = uc ? uh / uc : 0, R = rc ? rh / rc : 0;
+  const F = P + R ? 2 * P * R / (P + R) : 0;
+  return Math.round(Math.min(1, F * 1.12) * 100);
+}
+
+/* result */
+const rcv = $('#rcv'), rctx = rcv.getContext('2d');
+function renderResultCanvas() {
+  const k = fitCanvas(rcv);
+  rctx.setTransform(1, 0, 0, 1, 0, 0); rctx.clearRect(0, 0, rcv.width, rcv.height);
+  const shapes = allShapes(state.song), mode = state.mode;
+  if (mode === 'model' || !state.strokes.length) {
+    rctx.setTransform(k, 0, 0, k, 0, 0); drawRef(rctx, shapes, null, 6, FILL.paper); return;
+  }
+  rctx.setTransform(k, 0, 0, k, 0, 0);
+  state.strokes.forEach(s => strokePath(rctx, s));
+  if (mode === 'both') {
+    // align the model to where and how big the child drew
+    const ub = bboxOfStrokes(state.strokes), rb = bboxOfRef(state.song);
+    const s = Math.max(0.3, Math.min(3, Math.sqrt((ub.w * ub.h) / (rb.w * rb.h))));
+    const tx = ub.x + ub.w / 2 - (rb.x + rb.w / 2) * s, ty = ub.y + ub.h / 2 - (rb.y + rb.h / 2) * s;
+    rctx.setTransform(k * s, 0, 0, k * s, k * tx, k * ty);
+    rctx.globalAlpha = 0.55; rctx.setLineDash([10 / s, 8 / s]);
+    drawRef(rctx, shapes, '#4a86e0', 5 / s);
+    rctx.setLineDash([]); rctx.globalAlpha = 1;
+  }
+}
+$$('#seg button').forEach(b => b.addEventListener('click', () => {
+  state.mode = b.dataset.mode;
+  $$('#seg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  renderResultCanvas();
+}));
+function finish(correct) {
+  const song = state.song;
+  state.correct = correct; state.score = computeScore();
+  const p = progress[song.id] || { best: 0, correct: false };
+  progress[song.id] = { best: Math.max(p.best, state.score), correct: p.correct || correct };
+  works.unshift({ id: song.id, img: state.img, score: state.score, correct, at: Date.now() });
+  works = works.slice(0, 24);
+  saveAll();
+  show('result');
+  const v = $('#verdict');
+  v.innerHTML = correct
+    ? `<svg class="spark l" viewBox="0 0 40 40"><use href="#i-spark"/></svg>せいかい！<svg class="spark r" viewBox="0 0 40 40"><use href="#i-spark"/></svg>`
+    : `おしい！<small>こたえは「${song.name}」だったよ</small>`;
+  v.classList.remove('pop'); void v.offsetWidth; v.classList.add('pop');
+  $('#namePill').textContent = song.name;
+  $('#scoreNum').innerHTML = `${state.score}<small>てん</small>`;
+  const stars = state.score >= 80 ? 3 : state.score >= 55 ? 2 : state.score > 0 ? 1 : 0;
+  $('#stars').innerHTML = [0, 1, 2].map(i => `<svg viewBox="0 0 24 24" style="fill:${i < stars ? '#f3c342' : 'none'};stroke:${i < stars ? '#e0a92a' : 'var(--line)'}"><use href="#i-star"/></svg>`).join('');
+  $('#stars').setAttribute('aria-label', `ほし ${stars}こ`);
+  $('#fullLyric').textContent = '「' + song.steps.map(s => s.lyric.replace('\n', ' ')).join('\n') + '」';
+  state.mode = 'both';
+  $$('#seg button').forEach(x => x.setAttribute('aria-pressed', x.dataset.mode === 'both'));
+  renderResultCanvas();
+  if (settings.sound) {
+    const c = ac(); if (c) { const t = c.currentTime + 0.05; (correct ? [4, 5, 7, 8] : [4, 3, 1]).forEach((n, i) => tone(SCALE[n], t + i * 0.13, 0.4, 0.12)); }
+  }
+}
+$('#btnNextSong').addEventListener('click', () => openListen(nextSong(state.song.id)));
+$('#btnRetry').addEventListener('click', () => startDraw(state.song));
+
+/* list */
+let listFilter = 'all';
+$$('#listTabs button').forEach(b => b.addEventListener('click', () => {
+  listFilter = b.dataset.f; $$('#listTabs button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderList();
+}));
+function renderList() {
+  const g = $('#songGrid'); g.innerHTML = '';
+  const items = SONGS.filter(s => listFilter === 'all' || (listFilter === 'trad' ? s.trad : isClear(s.id)));
+  if (!items.length) { g.innerHTML = '<p class="empty">まだ クリアした うたは ないよ。<br>「すべて」から えらんで ちょうせんしよう！</p>'; return; }
+  items.forEach(s => {
+    const idx = SONGS.indexOf(s) + 1, cl = isClear(s.id), p = progress[s.id];
+    const b = document.createElement('button'); b.className = 'card';
+    b.innerHTML = cl
+      ? `<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="art">${svgOf(allShapes(s))}</div><span class="nm">${s.name}</span><span class="meta">${s.trad ? 'むかしのうた・' : 'さいこう '}${p.best}てん</span>`
+      : `<div class="q">?</div><span class="nm">うた ${idx}</span><span class="meta">${s.trad ? 'むかしの うた' : ''}${s.trad && p ? ' ・ ' : ''}${p ? `${p.best}てん` : s.trad ? '' : 'まだ ひみつ'}</span>`;
+    b.addEventListener('click', () => openListen(s));
+    g.appendChild(b);
+  });
+}
+
+/* works */
+function renderWorks() {
+  const g = $('#worksGrid'); g.innerHTML = '';
+  if (!works.length) { g.innerHTML = '<p class="empty">かいた えは ここに たまっていくよ。<br>さっそく 1まい かいてみよう！</p>'; return; }
+  works.forEach(w => {
+    const s = SONGS.find(x => x.id === w.id); if (!s) return;
+    const d = new Date(w.at);
+    const el = document.createElement('div'); el.className = 'card';
+    el.innerHTML = `${w.correct ? '<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>' : ''}<div class="thumb"><img alt="${s.name}の え" src="${w.img}"></div><span class="nm">${s.name}</span><span class="meta">${d.getMonth() + 1}/${d.getDate()} ・ ${w.score}てん</span>`;
+    g.appendChild(el);
+  });
+}
+
+/* sheets & settings */
+$$('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh || e.target.closest('[data-close]')) sh.hidden = true; }));
+function syncSettings() {
+  $('#swSound').setAttribute('aria-checked', settings.sound);
+  $('#swVoice').setAttribute('aria-checked', settings.voice);
+  $$('#sizes button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.w === settings.width));
+}
+function openSettings() { syncSettings(); $('#sheetSet').hidden = false; }
+$('#swSound').addEventListener('click', () => { settings.sound = !settings.sound; saveAll(); syncSettings(); });
+$('#swVoice').addEventListener('click', () => { settings.voice = !settings.voice; saveAll(); syncSettings(); });
+$$('#sizes button').forEach(b => b.addEventListener('click', () => { settings.width = +b.dataset.w; saveAll(); syncSettings(); }));
+let resetArmed = null;
+$('#btnReset').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!resetArmed) {
+    b.classList.add('armed'); b.textContent = 'ほんとうに けす？ もういちど おしてね';
+    resetArmed = setTimeout(() => { resetArmed = null; b.classList.remove('armed'); b.textContent = 'きろくを ぜんぶ けす'; }, 3000);
+    return;
+  }
+  clearTimeout(resetArmed); resetArmed = null;
+  progress = {}; works = []; saveAll();
+  b.classList.remove('armed'); b.textContent = 'けしました';
+  setTimeout(() => { b.textContent = 'きろくを ぜんぶ けす'; }, 1500);
+  renderHome();
+});
+
+renderHome();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>

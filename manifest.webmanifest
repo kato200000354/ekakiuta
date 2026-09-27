@@ -1,0 +1,17 @@
+{
+  "name": "えかきうたチャレンジ",
+  "short_name": "えかきうた",
+  "description": "えかきうたを聞きながら絵を描いて、最後に答え合わせするおえかきアプリ。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf8ea",
+  "theme_color": "#3e6fc5",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
