@@ -207,8 +207,20 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 
 /* list & works */
 .withnav{padding-bottom:96px}
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tabs button{height:40px;border-radius:20px;border:2px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;letter-spacing:.1em;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tabs button{height:40px;border-radius:20px;border:2px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--muted)}
+.card.add{border-style:dashed;justify-content:center}
+.card.add .q{background:var(--surface-2);font-size:44px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+.field input,.field textarea{font:inherit;font-size:17px;font-weight:700;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:10px 14px;letter-spacing:.1em;width:100%;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+.field textarea{resize:none;line-height:1.6}
+.field input:focus-visible,.field textarea:focus-visible{outline:3px solid var(--blue);outline-offset:1px}
+.mk-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+.mk-tools{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:10px}
+.mk-tools .tool{min-height:56px;flex-direction:row;gap:6px;font-size:13px}
+.mk-tools .tool svg{width:18px;height:18px}
+.mk-msg{margin:0;text-align:center;font-size:14px;font-weight:700;color:#d0555b;min-height:1.2em}
+.chip.warn{background:#d0555b;border-color:#d0555b;color:#fff}
 .tabs button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .card{position:relative;background:var(--surface);border-radius:20px;border:2px solid var(--line);padding:14px 10px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
@@ -262,6 +274,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
     <p class="progress-chip" id="homeProgress"></p>
     <button class="btn-main" id="btnStart">はじめる <svg viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
     <button class="btn-sub" id="btnList"><svg viewBox="0 0 24 24"><use href="#i-music"/></svg>うたを えらぶ</button>
+    <button class="btn-sub" id="btnMake"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg>うたを つくる</button>
     <button class="btn-sub" id="btnHow"><svg viewBox="0 0 24 24"><use href="#i-book"/></svg>あそびかた</button>
     <button class="btn-sub" id="btnSet"><svg viewBox="0 0 24 24"><use href="#i-gear"/></svg>せってい</button>
     <svg class="wave" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C60 10 110 45 170 32 C240 16 290 44 340 30 C370 22 390 24 400 28 V70 H0Z"/></svg>
@@ -281,6 +294,10 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
         <div class="times"><span id="tNow">0:00</span><span id="tAll">0:00</span></div>
       </div>
       <button class="bigplay" id="btnPlayAll" aria-label="さいせい"><svg viewBox="0 0 24 24"><use href="#i-play"/></svg></button>
+    </div>
+    <div class="minor" id="customTools" hidden>
+      <button class="chip" id="btnEditSong"><svg viewBox="0 0 24 24"><use href="#i-pencil"/></svg>このうたを なおす</button>
+      <button class="chip" id="btnDelSong"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>けす</button>
     </div>
     <div class="mystery" id="mystery"></div>
     <p class="hint-text">なにが できるかな？ うたを きいたら かいてみよう</p>
@@ -316,6 +333,30 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
   </section>
 
   <!-- GUESS -->
+  <!-- MAKE -->
+  <section class="screen" id="s-make" hidden>
+    <div class="topbar">
+      <button class="iconbtn" data-back="list" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
+      <h2 id="makeHead">うたを つくる</h2><span></span>
+    </div>
+    <label class="field">できあがる えの なまえ（こたえ）
+      <input id="mkName" maxlength="12" placeholder="れい：ぞうさん" autocomplete="off">
+    </label>
+    <div class="mk-head"><span id="mkStep">フレーズ 1 / 1</span><button class="chip" id="mkDelStep"><svg viewBox="0 0 24 24"><use href="#i-trash"/></svg>このフレーズを けす</button></div>
+    <label class="field">かし
+      <textarea id="mkLyric" rows="2" maxlength="40" placeholder="れい：まる まる まる&#10;まるを かいて"></textarea>
+    </label>
+    <div class="paper"><canvas id="mcv" aria-label="おてほんを かく キャンバス"></canvas></div>
+    <p class="hint-text">このフレーズで かく ところを かいてね。まえの フレーズの えは うすく みえるよ</p>
+    <div class="mk-tools">
+      <button class="tool" id="mkUndo"><svg viewBox="0 0 24 24"><use href="#i-undo"/></svg>もどす</button>
+      <button class="tool" id="mkPrev"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg>まえへ</button>
+      <button class="tool" id="mkNext"><span id="mkNextLbl">つぎの フレーズ</span><svg viewBox="0 0 24 24"><use href="#i-chev"/></svg></button>
+    </div>
+    <p class="mk-msg" id="mkMsg" role="status"></p>
+    <div class="actions"><button class="btn-main" id="mkSave">ほぞんして あそぶ <svg viewBox="0 0 24 24"><use href="#i-check"/></svg></button></div>
+  </section>
+
   <section class="screen" id="s-guess" hidden>
     <div class="topbar">
       <button class="iconbtn" id="guessBack" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button>
@@ -363,7 +404,8 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
     <div class="topbar"><button class="iconbtn" data-back="home" aria-label="もどる"><svg viewBox="0 0 24 24"><use href="#i-back"/></svg></button><h2>うた いちらん</h2><span></span></div>
     <div class="tabs" id="listTabs">
       <button data-f="all" aria-pressed="true">すべて</button>
-      <button data-f="trad" aria-pressed="false">むかしの うた</button>
+      <button data-f="trad" aria-pressed="false">むかし</button>
+      <button data-f="mine" aria-pressed="false">つくった</button>
       <button data-f="clear" aria-pressed="false">クリアずみ</button>
     </div>
     <div class="grid" id="songGrid"></div>
@@ -390,6 +432,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
         <li>うたを ひとフレーズずつ ききながら、ゆびや ペンで かいていこう。♪ボタンで なんども きけるよ。</li>
         <li>まちがえたら「やりなおす」で ひとつ もどせるよ。こまったら「ヒント」を おしてね。</li>
         <li>かきおわったら、なにが できたか えらんで こたえあわせ！ おてほんと かさねて そっくり度も わかるよ。</li>
+        <li>「うたを つくる」で、すきな えかきうたを じぶんで とうろくできるよ。かしを いれて、おてほんを かいて ほぞんしてね。</li>
       </ol>
       <button class="btn-main close" data-close>わかった</button>
     </div>
@@ -602,7 +645,9 @@ const store = {
 const settings = Object.assign({ sound: true, voice: true, width: 6 }, store.get('ekaki-settings', {}));
 let progress = store.get('ekaki-progress', {});   // id -> {best, correct}
 let works = store.get('ekaki-works', []);         // [{id, img, score, correct, at}]
-const saveAll = () => { store.set('ekaki-settings', settings); store.set('ekaki-progress', progress); store.set('ekaki-works', works); };
+let customs = store.get('ekaki-custom', []);        // じぶんで つくった うた [{id, name, seed, steps:[{lyric, strokes:[[[x,y],...]]}]}]
+const saveAll = () => { store.set('ekaki-settings', settings); store.set('ekaki-progress', progress); store.set('ekaki-works', works); store.set('ekaki-custom', customs); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const isClear = id => !!(progress[id] && progress[id].correct);
 
 /* ---------- audio ---------- */
@@ -643,7 +688,7 @@ function timeline(text) {
   let t = 0, span = 0; const ev = [];
   for (const ch of text) {
     if (ch === '\n') { t += 0.3; continue; }
-    if (ch === ' ') { t += 0.14; span++; continue; }
+    if (ch === ' ' || ch === '\u3000') { t += 0.14; span++; continue; }
     const small = 'ゃゅょっぁぃぅぇぉャュョッァィゥェォー'.includes(ch);
     ev.push({ t, span, dur: small ? BEAT * 0.5 : BEAT });
     t += small ? BEAT * 0.5 : BEAT; span++;
@@ -694,7 +739,7 @@ function playLine(song, idx, spans, onDone) {
 }
 
 /* ---------- screens ---------- */
-const SCREENS = ['home', 'listen', 'draw', 'guess', 'result', 'list', 'works'];
+const SCREENS = ['home', 'listen', 'draw', 'guess', 'result', 'list', 'works', 'make'];
 function show(name) {
   stopAudio(); cancelAnimationFrame(rafId);
   SCREENS.forEach(s => { $('#s-' + s).hidden = s !== name; });
@@ -730,6 +775,7 @@ function nextSong(afterId) {
 $('#btnStart').addEventListener('click', () => openListen(nextSong()));
 $('#btnList').addEventListener('click', () => show('list'));
 $('#btnHow').addEventListener('click', () => { $('#sheetHow').hidden = false; });
+$('#btnMake').addEventListener('click', () => openMaker(null));
 $('#btnSet').addEventListener('click', openSettings);
 
 /* listen */
@@ -741,7 +787,9 @@ function openListen(song) {
   show('listen');
   const idx = SONGS.indexOf(song) + 1;
   $('#listenHead').textContent = `うた ${idx}`;
-  $('#listenTitle').textContent = song.trad ? `むかしの うた「${song.trad}」` : 'えかきうた';
+  $('#listenTitle').textContent = song.trad ? `むかしの うた「${song.trad}」` : song.custom ? 'じぶんで つくった うた' : 'えかきうた';
+  $('#customTools').hidden = !song.custom;
+  disarm($('#btnDelSong'));
   const box = $('#lyrics'); box.innerHTML = '';
   lp.spans = song.steps.map(st => { const p = document.createElement('p'); box.appendChild(p); return karaoke(p, st.lyric); });
   lp.durs = song.steps.map(st => lineDur(st.lyric) + 0.25);
@@ -1016,7 +1064,7 @@ function finish(correct) {
   const v = $('#verdict');
   v.innerHTML = correct
     ? `<svg class="spark l" viewBox="0 0 40 40"><use href="#i-spark"/></svg>せいかい！<svg class="spark r" viewBox="0 0 40 40"><use href="#i-spark"/></svg>`
-    : `おしい！<small>こたえは「${song.name}」だったよ</small>`;
+    : `おしい！<small>こたえは「${esc(song.name)}」だったよ</small>`;
   v.classList.remove('pop'); void v.offsetWidth; v.classList.add('pop');
   $('#namePill').textContent = song.name;
   $('#scoreNum').innerHTML = `${state.score}<small>てん</small>`;
@@ -1041,13 +1089,20 @@ $$('#listTabs button').forEach(b => b.addEventListener('click', () => {
 }));
 function renderList() {
   const g = $('#songGrid'); g.innerHTML = '';
-  const items = SONGS.filter(s => listFilter === 'all' || (listFilter === 'trad' ? s.trad : isClear(s.id)));
-  if (!items.length) { g.innerHTML = '<p class="empty">まだ クリアした うたは ないよ。<br>「すべて」から えらんで ちょうせんしよう！</p>'; return; }
+  const items = SONGS.filter(s => listFilter === 'all' || (listFilter === 'trad' ? s.trad : listFilter === 'mine' ? s.custom : isClear(s.id)));
+  if (listFilter === 'all' || listFilter === 'mine') {
+    const a = document.createElement('button'); a.className = 'card add';
+    a.innerHTML = '<div class="q">＋</div><span class="nm">うたを つくる</span><span class="meta">すきな えかきうたを とうろく</span>';
+    a.addEventListener('click', () => openMaker(null));
+    g.appendChild(a);
+  }
+  if (!items.length && listFilter === 'clear') { g.innerHTML = '<p class="empty">まだ クリアした うたは ないよ。<br>「すべて」から えらんで ちょうせんしよう！</p>'; return; }
   items.forEach(s => {
     const idx = SONGS.indexOf(s) + 1, cl = isClear(s.id), p = progress[s.id];
     const b = document.createElement('button'); b.className = 'card';
     b.innerHTML = cl
-      ? `<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="art">${svgOf(allShapes(s))}</div><span class="nm">${s.name}</span><span class="meta">${s.trad ? 'むかしのうた・' : 'さいこう '}${p.best}てん</span>`
+      ? `<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="art">${svgOf(allShapes(s))}</div><span class="nm">${esc(s.name)}</span><span class="meta">${s.trad ? 'むかしのうた・' : s.custom ? 'つくった うた・' : 'さいこう '}${p.best}てん</span>`
+      : s.custom ? `<div class="q">?</div><span class="nm">${esc(s.name)}</span><span class="meta">つくった うた${p ? ` ・ ${p.best}てん` : ''}</span>`
       : `<div class="q">?</div><span class="nm">うた ${idx}</span><span class="meta">${s.trad ? 'むかしの うた' : ''}${s.trad && p ? ' ・ ' : ''}${p ? `${p.best}てん` : s.trad ? '' : 'まだ ひみつ'}</span>`;
     b.addEventListener('click', () => openListen(s));
     g.appendChild(b);
@@ -1062,7 +1117,7 @@ function renderWorks() {
     const s = SONGS.find(x => x.id === w.id); if (!s) return;
     const d = new Date(w.at);
     const el = document.createElement('div'); el.className = 'card';
-    el.innerHTML = `${w.correct ? '<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>' : ''}<div class="thumb"><img alt="${s.name}の え" src="${w.img}"></div><span class="nm">${s.name}</span><span class="meta">${d.getMonth() + 1}/${d.getDate()} ・ ${w.score}てん</span>`;
+    el.innerHTML = `${w.correct ? '<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span>' : ''}<div class="thumb"><img alt="${esc(s.name)}の え" src="${w.img}"></div><span class="nm">${esc(s.name)}</span><span class="meta">${d.getMonth() + 1}/${d.getDate()} ・ ${w.score}てん</span>`;
     g.appendChild(el);
   });
 }
@@ -1093,6 +1148,124 @@ $('#btnReset').addEventListener('click', e => {
   renderHome();
 });
 
+/* じぶんで つくる うた */
+function simplify(pts) {
+  const out = [pts[0]];
+  for (const p of pts) { const q = out[out.length - 1]; if (Math.hypot(p[0] - q[0], p[1] - q[1]) >= 2.5) out.push(p); }
+  const last = pts[pts.length - 1];
+  if (out.length > 1 && out[out.length - 1] !== last) out.push(last);
+  return out.map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]);
+}
+const strokeD = pts => pts.length === 1 ? `M${pts[0][0]} ${pts[0][1]}l0.01 0` : 'M' + pts.map(p => p.join(' ')).join('L');
+const toSong = c => ({ id: c.id, name: c.name, seed: c.seed, custom: true, steps: c.steps.map(s => ({ lyric: s.lyric, shapes: s.strokes.map(p => ({ d: strokeD(p) })) })) });
+function syncCustomSongs() {
+  for (let i = SONGS.length - 1; i >= 0; i--) if (SONGS[i].custom) SONGS.splice(i, 1);
+  customs.forEach(c => { SONGS.push(toSong(c)); delete refBoxCache[c.id]; });
+}
+// 2かい おすと じっこうする ボタン
+const armTimers = new WeakMap();
+function disarm(b) { clearTimeout(armTimers.get(b)); armTimers.delete(b); b.classList.remove('warn'); if (b.dataset.label) b.lastChild.textContent = b.dataset.label; }
+function twoTap(b, confirmText, action) {
+  b.addEventListener('click', () => {
+    if (!armTimers.has(b)) {
+      b.dataset.label = b.lastChild.textContent; b.lastChild.textContent = confirmText; b.classList.add('warn');
+      armTimers.set(b, setTimeout(() => disarm(b), 2500));
+      return;
+    }
+    disarm(b); action();
+  });
+}
+
+const mcv = $('#mcv'), mctx = mcv.getContext('2d');
+const mk = { id: null, seed: 0, steps: [], i: 0 };
+function openMaker(c) {
+  mk.id = c ? c.id : null;
+  mk.seed = c ? c.seed : 50 + Math.floor(Math.random() * 900);
+  mk.steps = c ? c.steps.map(s => ({ lyric: s.lyric, strokes: s.strokes.map(p => p.map(q => q.slice())) })) : [{ lyric: '', strokes: [] }];
+  mk.i = 0;
+  show('make');
+  $('#makeHead').textContent = c ? 'うたを なおす' : 'うたを つくる';
+  $('#mkName').value = c ? c.name : '';
+  $('#mkMsg').textContent = '';
+  fitCanvas(mcv); renderMk();
+}
+function renderMk() {
+  const n = mk.steps.length;
+  $('#mkStep').textContent = `フレーズ ${mk.i + 1} / ${n}`;
+  $('#mkLyric').value = mk.steps[mk.i].lyric;
+  $('#mkPrev').disabled = mk.i === 0;
+  $('#mkDelStep').hidden = n <= 1;
+  disarm($('#mkDelStep'));
+  $('#mkNextLbl').textContent = mk.i === n - 1 ? 'フレーズを ふやす' : 'つぎの フレーズ';
+  redrawMk();
+}
+function redrawMk() {
+  const k = mcv.width / 300;
+  mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.clearRect(0, 0, mcv.width, mcv.height);
+  mctx.setTransform(k, 0, 0, k, 0, 0);
+  mk.steps.forEach((s, j) => {
+    if (j > mk.i) return;
+    mctx.globalAlpha = j < mk.i ? 0.22 : 1;
+    s.strokes.forEach(p => strokePath(mctx, { pts: p, color: INK, w: 6 }));
+  });
+  mctx.globalAlpha = 1;
+  $('#mkUndo').disabled = !mk.steps[mk.i].strokes.length;
+}
+let mcur = null;
+const mpt = e => { const r = mcv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * 300, (e.clientY - r.top) / r.height * 300]; };
+mcv.addEventListener('pointerdown', e => {
+  e.preventDefault(); try { mcv.setPointerCapture(e.pointerId); } catch {}
+  mcur = [mpt(e)]; mk.steps[mk.i].strokes.push(mcur); $('#mkMsg').textContent = ''; redrawMk();
+});
+mcv.addEventListener('pointermove', e => {
+  if (!mcur) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  (evs.length ? evs : [e]).forEach(ev => mcur.push(mpt(ev)));
+  redrawMk();
+});
+const mEnd = () => { if (!mcur) return; const st = mk.steps[mk.i].strokes; st[st.length - 1] = simplify(mcur); mcur = null; redrawMk(); };
+mcv.addEventListener('pointerup', mEnd);
+mcv.addEventListener('pointercancel', mEnd);
+$('#mkLyric').addEventListener('input', e => { mk.steps[mk.i].lyric = e.target.value; $('#mkMsg').textContent = ''; });
+$('#mkUndo').addEventListener('click', () => { mk.steps[mk.i].strokes.pop(); redrawMk(); });
+$('#mkPrev').addEventListener('click', () => { if (mk.i > 0) { mk.i--; renderMk(); } });
+$('#mkNext').addEventListener('click', () => {
+  if (mk.i === mk.steps.length - 1) mk.steps.push({ lyric: '', strokes: [] });
+  mk.i++; renderMk(); $('#mkLyric').focus({ preventScroll: true });
+});
+twoTap($('#mkDelStep'), 'もういちど おすと けすよ', () => {
+  mk.steps.splice(mk.i, 1); mk.i = Math.min(mk.i, mk.steps.length - 1); renderMk();
+});
+$('#mkSave').addEventListener('click', () => {
+  const msg = t => { $('#mkMsg').textContent = t; };
+  const name = $('#mkName').value.trim();
+  if (!name) { $('#mkName').focus(); return msg('できあがる えの なまえを いれてね'); }
+  for (let j = 0; j < mk.steps.length; j++) {
+    const s = mk.steps[j], ly = s.lyric.trim();
+    if (!ly && !s.strokes.length) continue;
+    if (!ly || !s.strokes.length) { mk.i = j; renderMk(); return msg(`フレーズ ${j + 1} の ${ly ? 'おてほんの えを かいてね' : 'かしを いれてね'}`); }
+  }
+  const steps = mk.steps.filter(s => s.lyric.trim() && s.strokes.length).map(s => ({ lyric: s.lyric.trim(), strokes: s.strokes }));
+  if (!steps.length) return msg('かしと おてほんを いれてね');
+  const data = { id: mk.id || 'c' + Date.now().toString(36), name, seed: mk.seed, steps };
+  const k = customs.findIndex(c => c.id === data.id);
+  if (k >= 0) customs[k] = data; else customs.push(data);
+  saveAll(); syncCustomSongs();
+  openListen(SONGS.find(s => s.id === data.id));
+});
+$('#btnEditSong').addEventListener('click', () => {
+  const c = customs.find(c => c.id === state.song.id); if (c) openMaker(c);
+});
+twoTap($('#btnDelSong'), 'もういちど おすと けすよ', () => {
+  const id = state.song.id;
+  customs = customs.filter(c => c.id !== id);
+  delete progress[id];
+  works = works.filter(w => w.id !== id);
+  saveAll(); syncCustomSongs(); show('list');
+});
+window.addEventListener('resize', () => { if (!$('#s-make').hidden) { fitCanvas(mcv); redrawMk(); } });
+
+syncCustomSongs();
 renderHome();
 })();
 </script>
