@@ -499,11 +499,30 @@ function flowerOutline(cx, cy, R, r, n) {
   return d + 'Z';
 }
 // ひらがな「の」と数字「6」の形（文字絵用）
-const NO = (x, y) => `M${x + 2} ${y - 12}C${x - 4} ${y + 2} ${x - 10} ${y + 16} ${x - 16} ${y + 18}C${x - 24} ${y + 20} ${x - 26} ${y + 6} ${x - 20} ${y - 4}C${x - 12} ${y - 18} ${x + 14} ${y - 18} ${x + 20} ${y - 4}C${x + 26} ${y + 10} ${x + 14} ${y + 20} ${x + 2} ${y + 22}`;
+const NO = (x, y, k = 1) => `M${x + 2 * k} ${y - 12 * k}C${x - 4 * k} ${y + 2 * k} ${x - 10 * k} ${y + 16 * k} ${x - 16 * k} ${y + 18 * k}C${x - 24 * k} ${y + 20 * k} ${x - 26 * k} ${y + 6 * k} ${x - 20 * k} ${y - 4 * k}C${x - 12 * k} ${y - 18 * k} ${x + 14 * k} ${y - 18 * k} ${x + 20 * k} ${y - 4 * k}C${x + 26 * k} ${y + 10 * k} ${x + 14 * k} ${y + 20 * k} ${x + 2 * k} ${y + 22 * k}`;
 const SIX = (x, y, k = 1) => `M${x + 5 * k} ${y - 12 * k}C${x - 5 * k} ${y - 8 * k} ${x - 7 * k} ${y + 3 * k} ${x - 5 * k} ${y + 7 * k}C${x - 3 * k} ${y + 12 * k} ${x + 7 * k} ${y + 10 * k} ${x + 6 * k} ${y + 3 * k}C${x + 5 * k} ${y - 2 * k} ${x - 3 * k} ${y - 2 * k} ${x - 5 * k} ${y + 5 * k}`;
 const WAVE = y => `M114 ${y}q9 -8 18 0t18 0t18 0t18 0`;
+const RR = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z`;
+function ZIG(cx, cy, r1, r2, n) {
+  let d = '';
+  for (let k = 0; k <= 2 * n; k++) {
+    const a = Math.PI * k / n - Math.PI / 2, r = k % 2 ? r2 : r1;
+    d += (k ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(1) + ' ' + (cy + r * Math.sin(a)).toFixed(1);
+  }
+  return d + 'Z';
+}
+function SPIRAL(cx, cy, turns, rmax) {
+  let d = '';
+  const N = Math.round(turns * 36);
+  for (let k = 0; k <= N; k++) {
+    const t = k / N, a = t * turns * 2 * Math.PI, r = 4 + t * (rmax - 4);
+    d += (k ? 'L' : 'M') + (cx + r * Math.cos(a)).toFixed(1) + ' ' + (cy + r * Math.sin(a)).toFixed(1);
+  }
+  return d;
+}
+const ME = (x, y) => `M${x - 12} ${y - 14}L${x + 4} ${y + 20}` + NO(x, y);
 const INK = '#2d3857';
-const FILL = { ink: INK, pink: '#f4a3a8', yellow: '#f3c342', paper: '#fffdf7' };
+const FILL = { ink: INK, pink: '#f4a3a8', yellow: '#f3c342', red: '#ef6b6b', paper: '#fffdf7' };
 
 const SONGS = [
   { id: 'usagi', name: 'うさぎ', seed: 3, steps: [
@@ -562,6 +581,130 @@ const SONGS = [
       { d: 'M132 233L128 260M118 264L128 260L138 264' }, { d: 'M168 233L172 260M162 264L172 260L182 264' }] }
   ]},
 
+  /* ---- きせつ ---- */
+  { id: 'koinobori', name: 'こいのぼり', seed: 43, steps: [
+    { lyric: 'ながい ぼうを\nたてに いっぽん', shapes: [{ d: 'M60 44V282' }, { d: C(60, 34, 9), fill: 'yellow' }] },
+    { lyric: 'よこむき おさかな\nおおきく かいて', shapes: [{ d: 'M66 70Q150 60 222 72L200 100L222 128Q150 140 66 130Z' }] },
+    { lyric: 'まるい おめめを\nひとつ ぽちっ', shapes: [{ d: C(94, 94, 11) }, { d: C(96, 94, 4), fill: 'ink' }] },
+    { lyric: 'うろこを ならべて\nかぜに ゆれる', shapes: [{ d: 'M124 90q10 10 20 0t20 0t20 0' }, { d: 'M124 112q10 10 20 0t20 0t20 0' }] },
+    { lyric: 'ちいさな こいも\nそらを およぐ', shapes: [{ d: 'M66 162Q126 154 178 164L162 184L178 204Q126 214 66 206Z' }, { d: C(86, 182, 4), fill: 'ink' }] }
+  ]},
+  { id: 'hina', name: 'おひなさま', seed: 47, steps: [
+    { lyric: 'まるい おかおを\nひとつ かいて', shapes: [{ d: C(150, 104, 40) }] },
+    { lyric: 'かみのけ ふんわり\nまえがみ そろえ', shapes: [{ d: 'M106 118C96 48 204 48 194 118L198 156M106 118L102 156' }, { d: 'M118 84Q150 96 182 84' }] },
+    { lyric: 'あたまに かんむり\nきらきら ひかる', shapes: [{ d: 'M128 60L132 36L142 50L150 30L158 50L168 36L172 60Z', fill: 'yellow' }] },
+    { lyric: 'やまの かたちの\nきものを きせて', shapes: [{ d: 'M150 144L80 264H220Z' }, { d: 'M130 150L150 186L170 150' }] },
+    { lyric: 'おめめと おくちで\nおひなさま', shapes: [{ d: 'M132 102Q137 96 142 102M158 102Q163 96 168 102' }, { d: C(150, 120, 3.5), fill: 'red', stroke: false }, { d: C(124, 116, 9), fill: 'pink', stroke: false }, { d: C(176, 116, 9), fill: 'pink', stroke: false }] }
+  ]},
+  { id: 'santa', name: 'サンタさん', seed: 53, steps: [
+    { lyric: 'まるい おかおを\nかいたらね', shapes: [{ d: C(150, 156, 48) }] },
+    { lyric: 'さんかく ぼうしを\nちょこんと のせて', shapes: [{ d: 'M104 126L164 42L198 126', fill: 'red' }, { d: E(150, 128, 54, 12), fill: 'paper' }] },
+    { lyric: 'ぼうしの さきに\nまるい ぼんぼり', shapes: [{ d: C(166, 40, 11), fill: 'paper' }] },
+    { lyric: 'もこもこ おひげを\nあごに つけて', shapes: [{ d: 'M104 166C96 196 116 220 130 212C136 232 164 232 170 212C184 220 204 196 196 166' }] },
+    { lyric: 'おめめ ふたつと\nまるい おはな', shapes: [{ d: C(132, 150, 4.5), fill: 'ink' }, { d: C(168, 150, 4.5), fill: 'ink' }, { d: C(150, 166, 7), fill: 'pink' }] },
+    { lyric: 'にっこり わらって\nサンタさん', shapes: [{ d: 'M140 184Q150 192 160 184' }] }
+  ]},
+  { id: 'kabocha', name: 'かぼちゃ', seed: 59, steps: [
+    { lyric: 'よこに ながい\nまるを かいて', shapes: [{ d: E(150, 176, 96, 74) }] },
+    { lyric: 'たての すじを\nにほん ひいて', shapes: [{ d: 'M120 104C98 140 98 212 120 248M180 104C202 140 202 212 180 248' }] },
+    { lyric: 'あたまに ちょこんと\nへたを つけて', shapes: [{ d: 'M142 102L146 72L162 70L158 102' }] },
+    { lyric: 'さんかく おめめを\nふたつ かいて', shapes: [{ d: 'M104 162L122 136L140 162Z', fill: 'ink' }, { d: 'M160 162L178 136L196 162Z', fill: 'ink' }] },
+    { lyric: 'ぎざぎざ おくちで\nハロウィン かぼちゃ', shapes: [{ d: 'M100 196L120 206L136 196L150 208L164 196L180 206L200 196Q150 244 100 196Z' }] }
+  ]},
+  { id: 'yukidaruma', name: 'ゆきだるま', seed: 61, steps: [
+    { lyric: 'おおきな まるを\nしたに かいて', shapes: [{ d: C(150, 206, 68) }] },
+    { lyric: 'ちいさな まるを\nうえに のせて', shapes: [{ d: C(150, 102, 44), fill: 'paper' }] },
+    { lyric: 'バケツの ぼうし\nあたまに かぶせ', shapes: [{ d: 'M116 70L126 30H174L184 70Z', fill: 'paper' }] },
+    { lyric: 'おめめと おはな\nにこにこ おくち', shapes: [{ d: C(134, 98, 4.5), fill: 'ink' }, { d: C(166, 98, 4.5), fill: 'ink' }, { d: 'M150 106L176 112L150 118Z', fill: 'yellow' }, { d: 'M136 126Q150 134 164 126' }] },
+    { lyric: 'えだの てを つけ\nできあがり', shapes: [{ d: 'M86 192L40 160M52 168L44 148' }, { d: 'M214 192L260 160M248 168L256 148' }] }
+  ]},
+
+  /* ---- どうぶつ ---- */
+  { id: 'zou', name: 'ぞう', seed: 67, steps: [
+    { lyric: 'おおきな まるを\nひとつ かいて', shapes: [{ d: C(150, 136, 62) }] },
+    { lyric: 'うちわの ような\nおおきな みみ', shapes: [{ d: 'M93 112C40 76 20 168 98 172' }, { d: 'M207 112C260 76 280 168 202 172' }] },
+    { lyric: 'ながい おはなを\nくるんと のばす', shapes: [{ d: 'M138 168C134 220 146 256 172 250M162 168C160 214 164 236 176 238Q186 244 172 250' }] },
+    { lyric: 'おめめを ふたつ\nぽち ぽち かいて', shapes: [{ d: C(124, 124, 6), fill: 'ink' }, { d: C(176, 124, 6), fill: 'ink' }] },
+    { lyric: 'ほっぺを かいて\nぞうさん できた', shapes: [{ d: C(110, 152, 9), fill: 'pink', stroke: false }, { d: C(190, 152, 9), fill: 'pink', stroke: false }] }
+  ]},
+  { id: 'panda', name: 'パンダ', seed: 71, steps: [
+    { lyric: 'まるい おかおを\nおおきく かいて', shapes: [{ d: C(150, 162, 78) }] },
+    { lyric: 'くろい おみみを\nふたつ つけて', shapes: [{ d: C(94, 98, 22), fill: 'ink' }, { d: C(206, 98, 22), fill: 'ink' }] },
+    { lyric: 'おめめの まわりに\nくろい しずく', shapes: [{ d: E(120, 162, 16, 22), fill: 'ink' }, { d: E(180, 162, 16, 22), fill: 'ink' }] },
+    { lyric: 'しろい おめめを\nちょこんと いれて', shapes: [{ d: C(122, 158, 5), fill: 'paper', stroke: false }, { d: C(178, 158, 5), fill: 'paper', stroke: false }] },
+    { lyric: 'おはなと おくちで\nパンダさん', shapes: [{ d: E(150, 192, 9, 6), fill: 'ink' }, { d: 'M150 198V204M140 208Q145 214 150 206Q155 214 160 208' }] }
+  ]},
+  { id: 'penguin', name: 'ペンギン', seed: 73, steps: [
+    { lyric: 'たまごを たてに\nおおきく かいて', shapes: [{ d: E(150, 160, 70, 95) }] },
+    { lyric: 'おなかに しろい\nまるを かいて', shapes: [{ d: E(150, 192, 46, 58) }] },
+    { lyric: 'くちばし さんかく\nまんなかに', shapes: [{ d: 'M140 112L160 112L150 126Z', fill: 'yellow' }] },
+    { lyric: 'おめめを ふたつ\nぽちっと かいて', shapes: [{ d: C(128, 98, 5), fill: 'ink' }, { d: C(172, 98, 5), fill: 'ink' }] },
+    { lyric: 'はねと あしを\nつけたら できた', shapes: [{ d: 'M82 150L56 200L86 196M218 150L244 200L214 196' }, { d: 'M122 252L112 268H142L136 254M164 254L158 268H188L178 252', fill: 'yellow' }] }
+  ]},
+  { id: 'kaeru', name: 'かえる', seed: 79, steps: [
+    { lyric: 'よこに ながい\nまるを かいて', shapes: [{ d: E(150, 172, 96, 62) }] },
+    { lyric: 'うえに まるを\nふたつ のせて', shapes: [{ d: C(104, 114, 26), fill: 'paper' }, { d: C(196, 114, 26), fill: 'paper' }] },
+    { lyric: 'くろい おめめを\nまんなかに', shapes: [{ d: C(104, 114, 9), fill: 'ink' }, { d: C(196, 114, 9), fill: 'ink' }] },
+    { lyric: 'おおきな くちで\nにっこり わらう', shapes: [{ d: 'M92 182Q150 228 208 182' }] },
+    { lyric: 'ほっぺを かいて\nかえるさん', shapes: [{ d: C(88, 172, 9), fill: 'pink', stroke: false }, { d: C(212, 172, 9), fill: 'pink', stroke: false }] }
+  ]},
+  { id: 'katatsumuri', name: 'かたつむり', seed: 83, steps: [
+    { lyric: 'うずまき ぐるぐる\nまいて いこう', shapes: [{ d: SPIRAL(172, 152, 3, 70) }] },
+    { lyric: 'からだを ながく\nしたに かいて', shapes: [{ d: 'M104 212L80 152Q72 126 58 130Q44 134 50 158L64 228H236Q258 228 252 208' }] },
+    { lyric: 'つのを にほん\nぴょこんと だして', shapes: [{ d: 'M56 132L44 96M66 128L72 92' }, { d: C(44, 94, 4), fill: 'ink' }, { d: C(72, 90, 4), fill: 'ink' }] },
+    { lyric: 'おめめ ぽちっと\nかたつむり', shapes: [{ d: C(64, 152, 4), fill: 'ink' }, { d: 'M58 168Q64 174 70 168' }] }
+  ]},
+  { id: 'kujira', name: 'くじら', seed: 89, steps: [
+    { lyric: 'おおきな まるい\nやまを かいて', shapes: [{ d: 'M40 200Q56 110 160 110Q232 112 246 178' }] },
+    { lyric: 'しっぽを ぴんと\nはねあげて', shapes: [{ d: 'M246 178L272 150L278 206Q160 216 40 200' }] },
+    { lyric: 'おめめを ひとつ\nぽちっと かいて', shapes: [{ d: C(88, 166, 6), fill: 'ink' }] },
+    { lyric: 'おなかに ながい\nせんを ひいて', shapes: [{ d: 'M66 190Q150 200 226 192' }] },
+    { lyric: 'しおを ぴゅーっと\nふきあげて', shapes: [{ d: 'M150 106V70M150 70Q130 54 116 64M150 70Q170 54 184 64' }] }
+  ]},
+  { id: 'lion', name: 'ライオン', seed: 97, steps: [
+    { lyric: 'まるい おかおを\nかいたらね', shapes: [{ d: C(150, 150, 56) }] },
+    { lyric: 'まわりに ぎざぎざ\nたてがみ ぐるり', shapes: [{ d: ZIG(150, 150, 96, 72, 14) }] },
+    { lyric: 'まるい おみみを\nふたつ つけて', shapes: [{ d: C(112, 106, 12), fill: 'paper' }, { d: C(188, 106, 12), fill: 'paper' }] },
+    { lyric: 'おめめと おはなを\nかいたらね', shapes: [{ d: C(130, 140, 5.5), fill: 'ink' }, { d: C(170, 140, 5.5), fill: 'ink' }, { d: 'M142 160H158L150 170Z', fill: 'ink' }] },
+    { lyric: 'ひげを はやして\nライオンさん', shapes: [{ d: 'M150 170V176M140 180Q145 186 150 178Q155 186 160 180' }, { d: 'M122 172L98 168M122 180L100 186M178 172L202 168M178 180L200 186' }] }
+  ]},
+
+  /* ---- のりもの・たべもの ---- */
+  { id: 'densha', name: 'でんしゃ', seed: 101, steps: [
+    { lyric: 'ながい しかくを\nよこに かいて', shapes: [{ d: RR(36, 108, 228, 104, 14) }] },
+    { lyric: 'まどを みっつ\nならべて かいて', shapes: [{ d: RR(52, 126, 40, 34, 6) }, { d: RR(104, 126, 40, 34, 6) }, { d: RR(156, 126, 40, 34, 6) }] },
+    { lyric: 'まえに おおきな\nまどを ひとつ', shapes: [{ d: RR(212, 126, 36, 44, 6) }] },
+    { lyric: 'しゃりんを よっつ\nころころ つけて', shapes: [76, 116, 184, 224].map(x => ({ d: C(x, 214, 14), fill: 'paper' })) },
+    { lyric: 'せんろを ひいて\nしゅっぱつ しんこう', shapes: [{ d: 'M20 236H280M20 248H280' }] }
+  ]},
+  { id: 'hikouki', name: 'ひこうき', seed: 103, steps: [
+    { lyric: 'ながい からだを\nよこに かいて', shapes: [{ d: 'M40 150Q40 128 70 128H230Q272 128 274 150Q272 172 230 172H70Q40 172 40 150Z' }] },
+    { lyric: 'おおきな つばさを\nうえと したに', shapes: [{ d: 'M140 128L110 60H134L180 128' }, { d: 'M140 172L110 240H134L180 172' }] },
+    { lyric: 'しっぽの つばさを\nちょこんと たてて', shapes: [{ d: 'M58 128L44 88H62L84 128' }] },
+    { lyric: 'まるい まどを\nならべて かいて', shapes: [202, 224, 246].map(x => ({ d: C(x, 148, 6) })) },
+    { lyric: 'ぶーんと とんで\nできあがり', shapes: [{ d: 'M20 112H44M14 190H40' }] }
+  ]},
+  { id: 'rocket', name: 'ロケット', seed: 107, steps: [
+    { lyric: 'ほそながい しかくを\nたてに かいて', shapes: [{ d: 'M120 90V222H180V90' }] },
+    { lyric: 'うえに とんがり\nさんかく やね', shapes: [{ d: 'M120 90L150 34L180 90', fill: 'red' }] },
+    { lyric: 'まるい まどを\nひとつ かいて', shapes: [{ d: C(150, 130, 16) }] },
+    { lyric: 'りょうがわに はねを\nしたに つけて', shapes: [{ d: 'M120 178L90 230H120M180 178L210 230H180' }] },
+    { lyric: 'ほのおを ぼうっと\nはっしゃ！', shapes: [{ d: 'M130 222Q138 258 150 282Q162 258 170 222Z', fill: 'yellow' }] }
+  ]},
+  { id: 'ice', name: 'アイスクリーム', seed: 109, steps: [
+    { lyric: 'さかさ さんかく\nコーンを かいて', shapes: [{ d: 'M100 150L150 270L200 150Z' }] },
+    { lyric: 'こうしの もようを\nななめに ひいて', shapes: [{ d: 'M120 176L160 232M150 160L184 206M180 176L140 232M150 160L116 206' }] },
+    { lyric: 'まるい アイスを\nうえに のせて', shapes: [{ d: 'M96 150C80 100 120 72 150 74C180 72 220 100 204 150' }] },
+    { lyric: 'もうひとつ のせて\nにだん がさね', shapes: [{ d: 'M116 84C106 40 194 40 184 84' }] },
+    { lyric: 'さくらんぼ のせて\nできあがり', shapes: [{ d: C(150, 42, 9), fill: 'red' }, { d: 'M152 34Q156 18 170 12' }] }
+  ]},
+  { id: 'onigiri', name: 'おにぎり', seed: 113, steps: [
+    { lyric: 'まるい さんかく\nおおきく かいて', shapes: [{ d: 'M150 50Q170 50 240 200Q252 232 220 232H80Q48 232 60 200Q130 50 150 50Z' }] },
+    { lyric: 'したに しかくの\nのりを まいて', shapes: [{ d: 'M112 232V172H188V232Z', fill: 'ink' }] },
+    { lyric: 'おめめ ふたつ\nぽち ぽち', shapes: [{ d: C(128, 136, 5), fill: 'ink' }, { d: C(172, 136, 5), fill: 'ink' }] },
+    { lyric: 'にっこり おくちと\nほっぺで できた', shapes: [{ d: 'M140 150Q150 158 160 150' }, { d: C(112, 150, 9), fill: 'pink', stroke: false }, { d: C(188, 150, 9), fill: 'pink', stroke: false }] }
+  ]},
+
   /* ---- むかしから つたわる えかきうた（伝承・作者不詳） ---- */
   { id: 'henohe', name: 'かお', trad: 'へのへのもへじ', seed: 17, steps: [
     { lyric: 'へ の', tip: 'ひだりの まゆげと おめめ', shapes: [{ d: 'M84 108L106 90L132 112' }, { d: NO(110, 142) }] },
@@ -591,7 +734,7 @@ const SONGS = [
     { lyric: 'さん', tip: '「三」で おでこの しわ', shapes: [{ d: 'M124 94H176M120 106H180M124 118H176' }] },
     { lyric: 'は', tip: '「ハ」で まゆげ', shapes: [{ d: 'M130 134L114 146M170 134L186 146' }] },
     { lyric: 'まる まる', tip: 'まるを ふたつ おめめ', shapes: [{ d: C(122, 162, 10) }, { d: C(178, 162, 10) }] },
-    { lyric: 'む', tip: '「ム」で おはなと おくち', shapes: [{ d: 'M154 176L140 204L168 202M160 190L172 208' }] },
+    { lyric: 'む', tip: '「ム」で おはな', shapes: [{ d: 'M154 176L140 204L168 202M160 190L172 208' }] },
     { lyric: 'し', tip: 'おおきな「し」で あご', shapes: [{ d: 'M74 132C72 200 100 262 150 262C200 262 226 222 232 192' }] }
   ]},
   { id: 'kobuta', name: 'こぶた', trad: 'まんまるちゃん', seed: 31, steps: [
@@ -616,9 +759,44 @@ const SONGS = [
     { lyric: 'あめが ザァザァ\nふってきて', tip: 'たての せんを たくさん（あし）', shapes: [80, 108, 136, 164, 192, 220].map(x => ({ d: `M${x} 180q-6 44 ${x < 150 ? -12 : 12} 86` })) },
     { lyric: 'あられも ポツポツ\nふってきて', tip: 'てんてんを うって（きゅうばん）', shapes: [80, 108, 136, 164, 192, 220].flatMap(x => [C(x + (x < 150 ? -4 : 4), 214, 3.5), C(x + (x < 150 ? -8 : 8), 240, 3.5)]).map(d => ({ d, fill: 'ink' })) },
     { lyric: 'あっというまに\nたこにゅうどう', tip: 'あたまを かいて できあがり', shapes: [{ d: 'M70 176C56 62 120 28 150 28C180 28 244 62 230 176Q150 186 70 176Z' }] }
+  ]},
+  { id: 'oyome', name: 'およめさん', trad: 'およめさん', seed: 127, steps: [
+    { lyric: 'まるちゃん まるちゃん\nまるきばし', tip: 'まるい おめめ ふたつと はしの かたちの おはな', shapes: [{ d: C(126, 160, 8) }, { d: C(174, 160, 8) }, { d: 'M143 190Q150 178 157 190' }] },
+    { lyric: 'おおやま こやま\nはなざかり', tip: 'やまの かたちの かみのけ', shapes: [{ d: 'M80 140C78 74 118 64 150 64C182 64 222 74 220 140' }, { d: 'M112 66C104 28 196 28 188 66' }, { d: 'M82 112C58 104 56 142 80 142M218 112C242 104 244 142 220 142' }] },
+    { lyric: 'となりの おばさん\nそば たべて', tip: 'ほそい せんで まゆげ', shapes: [{ d: 'M114 142Q126 136 138 142M162 142Q174 136 186 142' }] },
+    { lyric: 'となりの おじさん\nそば たべて', tip: 'ちいさな おくち', shapes: [{ d: 'M141 212Q150 219 159 212' }] },
+    { lyric: 'となりの ねえさん\nおよめいり', tip: 'かおの まわりを かこむ', shapes: [{ d: 'M80 140C78 212 116 250 150 250C184 250 222 212 220 140' }] },
+    { lyric: 'きれいに かざって\nおよめいり', tip: 'かみかざりを つけて できあがり', shapes: [{ d: 'M104 50L70 30M196 50L230 30' }, { d: C(104, 50, 7), fill: 'pink' }, { d: C(196, 50, 7), fill: 'pink' }] }
+  ]},
+  { id: 'ohime', name: 'おひめさま', trad: 'おひめさま', seed: 131, steps: [
+    { lyric: 'たてたて よこよこ\nまーるかいて チョン', tip: 'ひだりの おめめ', shapes: [{ d: 'M112 146L108 136M122 144V134M132 146L136 136' }, { d: 'M108 128H136' }, { d: C(122, 160, 10) }, { d: C(122, 162, 3.5), fill: 'ink' }] },
+    { lyric: 'たてたて よこよこ\nまーるかいて チョン', tip: 'みぎの おめめ', shapes: [{ d: 'M168 146L164 136M178 144V134M188 146L192 136' }, { d: 'M164 128H192' }, { d: C(178, 160, 10) }, { d: C(178, 162, 3.5), fill: 'ink' }] },
+    { lyric: 'おおやまさんに\nこやまさん', tip: 'やまの かたちの かみと まえがみ', shapes: [{ d: 'M76 172C70 80 110 56 150 56C190 56 230 80 224 172' }, { d: 'M100 110Q125 128 150 110Q175 128 200 110' }] },
+    { lyric: 'さくらの はなが\nまんかいで', tip: 'かみに おはなの かざり', shapes: [{ d: flowerOutline(208, 76, 10, 7, 5), fill: 'pink' }] },
+    { lyric: 'あめが ざあざあ\nふってきて', tip: 'ながい かみを たてに', shapes: [{ d: 'M76 172L72 252M90 180L88 252M224 172L228 252M210 180L212 252' }] },
+    { lyric: 'あられも ポツポツ\nふってきて', tip: 'てんてんで ほっぺ', shapes: [{ d: C(110, 190, 9), fill: 'pink', stroke: false }, { d: C(190, 190, 9), fill: 'pink', stroke: false }] },
+    { lyric: 'いちえん もらって\nまめ かって', tip: '「1」で おはな', shapes: [{ d: 'M150 172L147 188H153' }] },
+    { lyric: 'まがった はりは\nれいえんだ', tip: 'まがった せんで おくち', shapes: [{ d: 'M140 206Q150 216 160 206' }] },
+    { lyric: 'アッという まに\nかわいい おひめさま', tip: 'あごを かいて できあがり', shapes: [{ d: 'M92 172C94 226 126 250 150 250C174 250 206 226 208 172' }] }
+  ]},
+  { id: 'tecchan', name: 'おんなのこ', trad: 'てっちゃん', seed: 137, steps: [
+    { lyric: 'てっちゃんと\nつるちゃんが', tip: '「て」と「つ」で かみのけ', shapes: [{ d: 'M96 80H204C170 92 152 110 150 134' }, { d: 'M206 96C240 112 240 172 208 192' }] },
+    { lyric: 'ハチミツ かって\nしかられて', tip: '「ハ」で まゆげ、「し」で ひだりの かみ', shapes: [{ d: 'M132 140L118 150M168 140L182 150' }, { d: 'M104 96C90 150 94 190 120 202' }] },
+    { lyric: 'へいきで へいきで\nのんきで のんきで', tip: '「の」で おめめ ふたつ', shapes: [{ d: NO(132, 166, 0.6) }, { d: NO(174, 166, 0.6) }] },
+    { lyric: 'しけんは\nれいてん', tip: '「0」で おくち', shapes: [{ d: E(150, 216, 9, 7) }] },
+    { lyric: 'たてたて よこよこ\nまるかいて ちょん', tip: 'あたまに りぼん', shapes: [{ d: 'M200 70L178 54V86ZM200 70L222 54V86Z', fill: 'pink' }, { d: C(200, 70, 5), fill: 'ink' }] },
+    { lyric: 'たてたて よこよこ\nまるかいて ちょん', tip: 'かおの まわりを かいて できあがり', shapes: [{ d: 'M104 112C92 200 120 246 150 246C180 246 208 200 196 112' }] }
+  ]},
+  { id: 'hemehe', name: 'かお', trad: 'へめへめくつじ', seed: 139, steps: [
+    { lyric: 'へ め', tip: 'ひだりの まゆげと おめめ', shapes: [{ d: 'M84 108L106 90L132 112' }, { d: ME(110, 142) }] },
+    { lyric: 'へ め', tip: 'みぎの まゆげと おめめ', shapes: [{ d: 'M168 112L194 90L216 108' }, { d: ME(194, 142) }] },
+    { lyric: 'く', tip: 'まんなかに おはな', shapes: [{ d: 'M160 166L142 186L160 206' }] },
+    { lyric: 'つ', tip: 'したに おくち', shapes: [{ d: 'M120 224C150 212 186 216 180 234C176 246 160 248 150 246' }] },
+    { lyric: 'じ', tip: 'おおきく かこんで かおの まわり', shapes: [
+      { d: 'M96 56C52 110 54 236 140 268C214 280 262 214 250 130C246 100 234 76 216 60' }, { d: 'M228 38L234 52M244 32L250 46' }] }
   ]}
 ];
-const DECOYS = ['ねこ', 'いぬ', 'かめ', 'りんご', 'おうち', 'ふね', 'きのこ', 'ほし', 'ぞう', 'ひこうき', 'ロボット', 'ペンギン'];
+const DECOYS = ['ねこ', 'いぬ', 'かめ', 'りんご', 'おうち', 'ふね', 'きのこ', 'ほし', 'ロボット', 'バス', 'とけい', 'かさ'];
 
 const MASCOT = [
   { d: E(150, 175, 85, 70) },
@@ -975,7 +1153,7 @@ function openGuess() {
   show('guess');
   state.img = snapshot(280);
   $('#guessImg').src = state.img;
-  const others = shuffle([...SONGS.map(s => s.name), ...DECOYS].filter(n => n !== state.song.name)).slice(0, 3);
+  const others = shuffle([...new Set([...SONGS.map(s => s.name), ...DECOYS])].filter(n => n !== state.song.name)).slice(0, 3);
   const box = $('#choices'); box.innerHTML = '';
   shuffle([state.song.name, ...others]).forEach(name => {
     const b = document.createElement('button'); b.className = 'choice'; b.textContent = name;
