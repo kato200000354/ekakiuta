@@ -209,6 +209,7 @@ button:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
 .withnav{padding-bottom:96px}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .tabs button{height:40px;border-radius:20px;border:2px solid var(--line);background:var(--surface);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--muted)}
+.card .meta.go{color:var(--blue);font-weight:700}
 .card.add{border-style:dashed;justify-content:center}
 .card.add .q{background:var(--surface-2);font-size:44px}
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em}
@@ -1099,11 +1100,14 @@ function renderList() {
   if (!items.length && listFilter === 'clear') { g.innerHTML = '<p class="empty">まだ クリアした うたは ないよ。<br>「すべて」から えらんで ちょうせんしよう！</p>'; return; }
   items.forEach(s => {
     const idx = SONGS.indexOf(s) + 1, cl = isClear(s.id), p = progress[s.id];
-    const b = document.createElement('button'); b.className = 'card';
+    const score = p ? `さいこう ${p.best}てん` : 'タップして ちょうせん！';
+    const b = document.createElement('button'); b.className = 'card' + (cl ? '' : ' secret');
+    // クリアするまでは 絵と なまえを ひみつに（じぶんで つくった うたは なまえだけ だす）
     b.innerHTML = cl
-      ? `<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="art">${svgOf(allShapes(s))}</div><span class="nm">${esc(s.name)}</span><span class="meta">${s.trad ? 'むかしのうた・' : s.custom ? 'つくった うた・' : 'さいこう '}${p.best}てん</span>`
-      : s.custom ? `<div class="q">?</div><span class="nm">${esc(s.name)}</span><span class="meta">つくった うた${p ? ` ・ ${p.best}てん` : ''}</span>`
-      : `<div class="q">?</div><span class="nm">うた ${idx}</span><span class="meta">${s.trad ? 'むかしの うた' : ''}${s.trad && p ? ' ・ ' : ''}${p ? `${p.best}てん` : s.trad ? '' : 'まだ ひみつ'}</span>`;
+      ? `<span class="badge"><svg viewBox="0 0 24 24"><use href="#i-check"/></svg></span><div class="art">${svgOf(allShapes(s))}</div><span class="nm">${esc(s.name)}</span>`
+        + (s.trad ? `<span class="meta">「${s.trad}」</span>` : '') + `<span class="meta">${score}</span>`
+      : `<div class="q">?</div><span class="nm">${s.custom ? esc(s.name) : `うた ${idx}`}</span>`
+        + (s.trad ? '<span class="meta">むかしの うた</span>' : s.custom ? '<span class="meta">つくった うた</span>' : '') + `<span class="meta go">${score}</span>`;
     b.addEventListener('click', () => openListen(s));
     g.appendChild(b);
   });
