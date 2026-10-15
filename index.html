@@ -944,31 +944,82 @@ function karaoke(el, text) {
   }
   return spans;
 }
-function speak(text) {
-  if (!settings.voice || !('speechSynthesis' in window)) return;
+// 読み上げ用の文。ことばの頭の「は」は助詞の「わ」と読まれやすい（はな→わな）ので、カタカナにして「は」と読ませる。
+// 文字数は変えない（読み上げ位置と歌詞の文字を対応させるため）
+const yomi = text => text.replace(/(^|[\s、])は/g, '$1ハ').replace(/\n/g, '、');
+function speak(text, on) {
+  if (!settings.voice || !('speechSynthesis' in window)) return null;
   try {
-    const u = new SpeechSynthesisUtterance(text.replace(/\n/g, '、'));
+    const u = new SpeechSynthesisUtterance(yomi(text));
     u.lang = 'ja-JP'; u.rate = 0.85; u.pitch = 1.25;
+    Object.assign(u, on);
     speechSynthesis.speak(u);
-  } catch {}
+    return u;
+  } catch { return null; }
 }
+// 声の速さは端末ごとにちがうので、実際に読み終わった時間から色が進む速さを合わせていく
+let voicePace = 1;
 function playLine(song, idx, spans, onDone) {
   const my = token;
   const text = song.steps[idx].lyric;
   const { ev, total } = timeline(text);
   const notes = melody(song.seed, idx, ev.length);
   spans.forEach(s => s.classList.remove('on'));
-  const c = settings.sound ? ac() : null;
-  const t0 = c ? c.currentTime + 0.06 : 0;
-  const vol = settings.voice ? 0.07 : 0.14;
-  ev.forEach((e, k) => {
-    const last = k === ev.length - 1;
-    if (c) tone(SCALE[notes[k]], t0 + e.t, last ? BEAT * 2.2 : e.dur * 1.4, vol);
-    timers.push(setTimeout(() => { if (my !== token) return; for (let j = 0; j <= e.span; j++) spans[j] && spans[j].classList.add('on'); }, e.t * 1000 + 60));
-  });
-  speak(text);
-  timers.push(setTimeout(() => { if (my !== token) return; spans.forEach(s => s.classList.add('on')); onDone && onDone(); }, total * 1000 + 60));
-  return total;
+  const lightTo = j => { if (my !== token) return; for (let k = 0; k <= j; k++) spans[k] && spans[k].classList.add('on'); };
+  // 読み上げる文の何文字目が、何番目の文字（span）にあたるか
+  const spanAt = []; let n = 0;
+  for (const ch of text) { spanAt.push(ch === '\n' ? n - 1 : n); if (ch !== '\n') n++; }
+  let started = false, lineDone = false, voiceDone = true, t1 = 0, finished = false;
+  const finish = () => {
+    if (my !== token || finished || !lineDone || !voiceDone) return;
+    finished = true; lightTo(spans.length - 1); onDone && onDone();
+  };
+  const voiceOn = settings.voice && 'speechSynthesis' in window;
+  const k = voiceOn ? voicePace : 1;
+  const start = () => {
+    if (started || my !== token) return;
+    started = true; t1 = performance.now();
+    const c = settings.sound ? ac() : null;
+    const t0 = c ? c.currentTime + 0.06 : 0;
+    const vol = voiceOn ? 0.07 : 0.14;
+    ev.forEach((e, i) => {
+      const last = i === ev.length - 1;
+      if (c) tone(SCALE[notes[i]], t0 + e.t * k, last ? BEAT * 2.2 : e.dur * 1.4 * k, vol);
+      timers.push(setTimeout(() => lightTo(e.span), e.t * k * 1000 + 60));
+    });
+    timers.push(setTimeout(() => {
+      lineDone = true; finish();
+      // 読み終わりの知らせが来ない端末でも止まらないように、少し待ったら次へ
+      timers.push(setTimeout(() => { voiceDone = true; finish(); }, Math.max(2500, total * 1000)));
+    }, total * k * 1000 + 60));
+  };
+  if (voiceOn) {
+    voiceDone = false;
+    const u = speak(text, {
+      // 声が出はじめてから色を進める
+      onstart: start,
+      // 読んでいる場所がわかる端末では、声が先に進んでいたらそこまで色をつける
+      onboundary: e => {
+        if (my !== token || e.name === 'sentence') return;
+        const from = e.charIndex, len = Math.max(1, e.charLength || 1);
+        lightTo(spanAt[from] ?? spans.length - 1);
+        for (let i = 1; i < len; i++) timers.push(setTimeout(() => lightTo(spanAt[from + i] ?? spans.length - 1), i * BEAT * k * 600));
+      },
+      onend: () => {
+        if (my !== token) return;
+        if (started) {
+          const r = (performance.now() - t1) / 1000 / total;
+          if (r > 0.5 && r < 2.5) voicePace = voicePace * 0.5 + r * 0.5;
+          voicePace = Math.min(2.2, Math.max(0.6, voicePace));
+        }
+        voiceDone = true; lineDone = true; finish();
+      },
+      onerror: () => { voiceDone = true; start(); finish(); },
+    });
+    if (!u) voiceDone = true;
+    timers.push(setTimeout(start, 800));   // 声が出ない端末でも進める
+  } else start();
+  return total * k;
 }
 
 /* ---------- screens ---------- */
